@@ -166,6 +166,7 @@ export function ReviewQueue() {
             backgroundColor: theme.tableBackground,
             border: `1px solid ${theme.tableBorder}`,
             borderRadius: 8,
+            flexShrink: 0,
             gap: 12,
             padding: 16,
           }}
@@ -264,6 +265,7 @@ export function ReviewQueue() {
                     backgroundColor: theme.tableBackground,
                     border: `1px solid ${theme.tableBorder}`,
                     borderRadius: 8,
+                    flexShrink: 0,
                     gap: 12,
                     padding: 16,
                   }}
@@ -385,6 +387,7 @@ export function ReviewQueue() {
               backgroundColor: theme.tableBackground,
               border: `1px solid ${theme.tableBorder}`,
               borderRadius: 8,
+              flexShrink: 0,
               padding: 40,
             }}
           >
