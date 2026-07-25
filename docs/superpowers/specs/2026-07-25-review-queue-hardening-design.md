@@ -31,4 +31,4 @@ Finish the existing `/review` prototype in the Actual Budget fork so bank-webhoo
 
 ## Error handling and testing
 
-Mutation controls are disabled while their request is pending and show inline failure feedback. Quick Add reports validation and submission errors inline. Tests will cover payload construction and the principal success/error states, alongside typecheck and relevant package tests.
+Mutation controls are disabled while their request is pending and show inline failure feedback. Quick Add reports validation and submission errors inline. After a successful Quick Add or approval mutation resolves, Actual shows a success toast so the user knows the server accepted the update. Tests will cover payload construction and the principal success/error states, alongside typecheck and relevant package tests.

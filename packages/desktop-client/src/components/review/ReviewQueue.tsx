@@ -29,11 +29,14 @@ import { useDateFormat } from '#hooks/useDateFormat';
 import { useFormat } from '#hooks/useFormat';
 import { usePayeesById } from '#hooks/usePayees';
 import { useQuery } from '#hooks/useQuery';
+import { addNotification } from '#notifications/notificationsSlice';
+import { useDispatch } from '#redux';
 
 import { buildQuickAddTransaction } from './reviewQueueUtils';
 
 export function ReviewQueue() {
   const { t } = useTranslation();
+  const dispatch = useDispatch();
   const { data: transactions, isLoading } = useQuery<TransactionEntity>(
     () => q('transactions').filter({ cleared: false }).select('*'),
     [],
@@ -105,6 +108,14 @@ export function ReviewQueue() {
     try {
       await send('transactions-batch-update', { added: [result.transaction] });
       resetQuickAdd();
+      dispatch(
+        addNotification({
+          notification: {
+            type: 'message',
+            message: t('Transaction added.'),
+          },
+        }),
+      );
     } catch {
       setQuickAddError(t('Unable to add the transaction. Please try again.'));
     } finally {
@@ -122,6 +133,16 @@ export function ReviewQueue() {
       await send('transactions-batch-update', {
         updated: [{ id, ...changes }],
       });
+      if (changes.cleared === true) {
+        dispatch(
+          addNotification({
+            notification: {
+              type: 'message',
+              message: t('Transaction approved.'),
+            },
+          }),
+        );
+      }
     } catch {
       setRowErrors(current => ({
         ...current,
