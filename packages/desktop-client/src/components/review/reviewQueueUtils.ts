@@ -12,9 +12,7 @@ type QuickAddResult =
   | { transaction: TransactionEntity }
   | { error: 'amount' | 'account' | 'date' };
 
-export function buildQuickAddTransaction(
-  input: QuickAddInput,
-): QuickAddResult {
+export function buildQuickAddTransaction(input: QuickAddInput): QuickAddResult {
   if (!input.amount) {
     return { error: 'amount' };
   }

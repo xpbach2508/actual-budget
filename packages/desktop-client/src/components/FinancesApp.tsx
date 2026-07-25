@@ -37,6 +37,7 @@ import { MobilePageHeaderProvider, MobilePageHeaderSlot } from './Page';
 import { Reports } from './reports';
 import { LoadingIndicator } from './reports/LoadingIndicator';
 import { NarrowAlternate, WideComponent } from './responsive';
+import { ReviewQueue } from './review/ReviewQueue';
 import { useMultiuserEnabled } from './ServerContext';
 import { Settings } from './settings';
 import { FloatableSidebar } from './sidebar';
@@ -262,6 +263,18 @@ export function FinancesApp() {
                   />
 
                   <Route path="/reports/*" element={<Reports />} />
+
+                  <Route
+                    path="/review"
+                    element={
+                      <ErrorBoundary
+                        FallbackComponent={FeatureErrorFallback}
+                        resetKeys={[location.pathname]}
+                      >
+                        <ReviewQueue />
+                      </ErrorBoundary>
+                    }
+                  />
 
                   <Route
                     path="/budget"

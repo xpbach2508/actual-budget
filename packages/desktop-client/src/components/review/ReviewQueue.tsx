@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
-import { v4 as uuidv4 } from 'uuid';
 
 import { Button } from '@actual-app/components/button';
 import { SvgInboxCheck, SvgTrash } from '@actual-app/components/icons/v1';
@@ -18,6 +17,7 @@ import { send } from '@actual-app/core/platform/client/connection';
 import * as monthUtils from '@actual-app/core/shared/months';
 import { q } from '@actual-app/core/shared/query';
 import type { TransactionEntity } from '@actual-app/core/types/models';
+import { v4 as uuidv4 } from 'uuid';
 
 import { Error as ErrorAlert } from '#components/alerts';
 import { Page } from '#components/Page';
@@ -176,7 +176,14 @@ export function ReviewQueue() {
               <Trans>Quick add transaction</Trans>
             </Text>
           </View>
-          <View style={{ alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+          <View
+            style={{
+              alignItems: 'center',
+              flexDirection: 'row',
+              flexWrap: 'wrap',
+              gap: 10,
+            }}
+          >
             <Input
               aria-label={t('Amount')}
               placeholder={t('Amount')}
@@ -212,7 +219,11 @@ export function ReviewQueue() {
               defaultLabel={t('Category')}
               style={{ flex: '1 1 120px' }}
             />
-            <Button variant="primary" onPress={handleQuickAdd} isDisabled={isAdding}>
+            <Button
+              variant="primary"
+              onPress={handleQuickAdd}
+              isDisabled={isAdding}
+            >
               <Trans>Add transaction</Trans>
             </Button>
           </View>
@@ -235,13 +246,15 @@ export function ReviewQueue() {
             {transactions.map(transaction => {
               const isPending = pendingIds.has(transaction.id);
               const accountName =
-                accounts?.find(account => account.id === transaction.account)?.name ??
-                t('Unknown account');
+                accounts?.find(account => account.id === transaction.account)
+                  ?.name ?? t('Unknown account');
               const payeeName = transaction.payee
                 ? payeesById?.[transaction.payee]?.name
                 : t('No payee');
               const categoryName = transaction.category
-                ? categories.find(category => category.id === transaction.category)?.name
+                ? categories.find(
+                    category => category.id === transaction.category,
+                  )?.name
                 : t('Uncategorized');
 
               return (
@@ -255,8 +268,16 @@ export function ReviewQueue() {
                     padding: 16,
                   }}
                 >
-                  <View style={{ alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' }}>
-                    <Text style={{ color: theme.pageTextSubdued, fontSize: 12 }}>
+                  <View
+                    style={{
+                      alignItems: 'center',
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    <Text
+                      style={{ color: theme.pageTextSubdued, fontSize: 12 }}
+                    >
                       {transaction.date} · {accountName}
                     </Text>
                     <Text
@@ -284,26 +305,49 @@ export function ReviewQueue() {
                       }}
                     >
                       <SvgNotesPaper width={15} height={15} />
-                      <Text style={{ color: theme.pageTextSubdued, flex: 1, fontSize: 12 }}>
+                      <Text
+                        style={{
+                          color: theme.pageTextSubdued,
+                          flex: 1,
+                          fontSize: 12,
+                        }}
+                      >
                         {transaction.notes}
                       </Text>
                     </View>
                   )}
-                  <View style={{ alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  <View
+                    style={{
+                      alignItems: 'center',
+                      flexDirection: 'row',
+                      flexWrap: 'wrap',
+                      gap: 8,
+                    }}
+                  >
                     <Select
                       options={categoryOptions}
                       value={transaction.category ?? ''}
-                      onChange={category => void updateRow(transaction.id, { category })}
+                      onChange={category =>
+                        void updateRow(transaction.id, { category })
+                      }
                       defaultLabel={categoryName}
                       disabled={isPending}
                       style={{ flex: '1 1 160px' }}
                     />
-                    <View style={{ alignItems: 'center', flexDirection: 'row', gap: 4 }}>
+                    <View
+                      style={{
+                        alignItems: 'center',
+                        flexDirection: 'row',
+                        gap: 4,
+                      }}
+                    >
                       <SvgArrowsSynchronize width={15} height={15} />
                       <Select
                         options={transferOptions}
                         value={transaction.payee ?? ''}
-                        onChange={payee => void updateRow(transaction.id, { payee })}
+                        onChange={payee =>
+                          void updateRow(transaction.id, { payee })
+                        }
                         defaultLabel={t('Transfer')}
                         disabled={isPending}
                         style={{ minWidth: 130 }}
@@ -311,7 +355,9 @@ export function ReviewQueue() {
                     </View>
                     <Button
                       variant="primary"
-                      onPress={() => void updateRow(transaction.id, { cleared: true })}
+                      onPress={() =>
+                        void updateRow(transaction.id, { cleared: true })
+                      }
                       isDisabled={isPending}
                     >
                       <SvgCheckCircle1 width={15} height={15} />

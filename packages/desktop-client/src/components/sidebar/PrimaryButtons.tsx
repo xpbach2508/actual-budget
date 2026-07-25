@@ -12,6 +12,7 @@ import {
   SvgTag,
   SvgTuning,
   SvgWallet,
+  SvgInboxCheck,
 } from '@actual-app/components/icons/v1';
 import { SvgCalendar3 } from '@actual-app/components/icons/v2';
 import { View } from '@actual-app/components/view';
@@ -49,6 +50,7 @@ export function PrimaryButtons() {
   return (
     <View style={{ flexShrink: 0 }}>
       <Item title={t('Budget')} Icon={SvgWallet} to="/budget" />
+      <Item title={t('Review')} Icon={SvgInboxCheck} to="/review" />
       <Item title={t('Reports')} Icon={SvgReports} to="/reports" />
       <Item title={t('Schedules')} Icon={SvgCalendar3} to="/schedules" />
       <Item

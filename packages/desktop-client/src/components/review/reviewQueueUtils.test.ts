@@ -13,7 +13,9 @@ const input = {
 
 describe('buildQuickAddTransaction', () => {
   it('creates a cleared transaction without blank optional values', () => {
-    expect(buildQuickAddTransaction({ ...input, payee: '', category: '' })).toEqual({
+    expect(
+      buildQuickAddTransaction({ ...input, payee: '', category: '' }),
+    ).toEqual({
       transaction: {
         id: 'transaction-id',
         amount: -125000,
