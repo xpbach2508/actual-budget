@@ -9,6 +9,7 @@ import { FormError } from '@actual-app/components/form-error';
 import { InitialFocus } from '@actual-app/components/initial-focus';
 import { InlineField } from '@actual-app/components/inline-field';
 import { Input } from '@actual-app/components/input';
+import { Select } from '@actual-app/components/select';
 import { Text } from '@actual-app/components/text';
 import { theme } from '@actual-app/components/theme';
 import { View } from '@actual-app/components/view';
@@ -40,6 +41,7 @@ export function CreateLocalAccountModal() {
   const [name, setName] = useState('');
   const [offbudget, setOffbudget] = useState(false);
   const [balance, setBalance] = useState('0');
+  const [subtype, setSubtype] = useState<string | null>(null);
 
   const [nameError, setNameError] = useState(null);
   const [balanceError, setBalanceError] = useState(false);
@@ -72,6 +74,7 @@ export function CreateLocalAccountModal() {
           name,
           balance: toRelaxedNumber(balance),
           offBudget: offbudget,
+          subtype,
         },
         {
           onSuccess: id => {
@@ -159,7 +162,12 @@ export function CreateLocalAccountModal() {
                       id="offbudget"
                       name="offbudget"
                       checked={offbudget}
-                      onChange={() => setOffbudget(!offbudget)}
+                      onChange={() => {
+                        setOffbudget(!offbudget);
+                        if (offbudget) {
+                          setSubtype(null);
+                        }
+                      }}
                     />
                     <label
                       htmlFor="offbudget"
@@ -201,6 +209,22 @@ export function CreateLocalAccountModal() {
                   </div>
                 </View>
               </View>
+
+              {offbudget && (
+                <InlineField label="Loại tài sản" width="100%">
+                  <Select
+                    value={subtype || ''}
+                    onChange={value => setSubtype(value || null)}
+                    options={[
+                      ['', '(Không chọn)'],
+                      ['savings', '🏦 Tiết kiệm'],
+                      ['gold', '🪙 Vàng'],
+                      ['family', '👨‍👩‍👧 Gửi người thân'],
+                      ['investment', '📈 Đầu tư'],
+                    ]}
+                  />
+                </InlineField>
+              )}
 
               <InlineField label={t('Balance')} width="100%">
                 <Input

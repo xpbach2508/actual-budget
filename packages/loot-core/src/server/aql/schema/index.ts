@@ -78,6 +78,7 @@ export const schema = {
     last_reconciled: f('string'),
     last_sync: f('string'),
     bank_sync_status: f('string'),
+    account_subtype: f('string'),
   },
   categories: {
     id: f('id'),

@@ -22,6 +22,7 @@ export type AccountEntity = {
   account_sync_source: AccountSyncSource | null;
   last_sync: string | null;
   bank_sync_status: BankSyncStatus | null;
+  account_subtype?: 'savings' | 'gold' | 'family' | 'investment' | null;
 };
 
 export type AccountSyncSource = BankSyncProviders;

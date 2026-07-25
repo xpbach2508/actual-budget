@@ -552,16 +552,19 @@ async function createAccount({
   balance = 0,
   offBudget = false,
   closed = false,
+  subtype = null,
 }: {
   name: string;
   balance?: number | undefined;
   offBudget?: boolean | undefined;
   closed?: boolean | undefined;
+  subtype?: string | null;
 }) {
   const id: AccountEntity['id'] = await db.insertAccount({
     name,
     offbudget: offBudget ? 1 : 0,
     closed: closed ? 1 : 0,
+    account_subtype: subtype,
   });
 
   await db.insertPayee({

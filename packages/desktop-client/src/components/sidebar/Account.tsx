@@ -67,6 +67,21 @@ type AccountProps<FieldName extends SheetFields<'account'>> = {
   balanceTestId?: string;
 };
 
+const getSubtypeIcon = (subtype?: string | null) => {
+  switch (subtype) {
+    case 'savings':
+      return '🏦';
+    case 'gold':
+      return '🪙';
+    case 'family':
+      return '👨‍👩‍👧';
+    case 'investment':
+      return '📈';
+    default:
+      return null;
+  }
+};
+
 export function Account<FieldName extends SheetFields<'account'>>({
   name,
   account,
@@ -256,7 +271,12 @@ export function Account<FieldName extends SheetFields<'account'>>({
                     />
                   </InitialFocus>
                 ) : (
-                  name
+                  <>
+                    {name}
+                    {account?.offbudget === 1 && account?.account_subtype
+                      ? ` ${getSubtypeIcon(account.account_subtype) || ''}`
+                      : null}
+                  </>
                 )
               }
               right={

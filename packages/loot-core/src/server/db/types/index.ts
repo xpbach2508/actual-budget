@@ -20,6 +20,7 @@ export type DbAccount = {
   official_name?: string | null;
   type?: string | null;
   subtype?: string | null;
+  account_subtype?: string | null;
   bank?: string | null;
   account_sync_source?: 'simpleFin' | 'goCardless' | null;
   last_reconciled?: string | null;
