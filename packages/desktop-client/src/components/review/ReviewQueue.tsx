@@ -362,7 +362,11 @@ export function ReviewQueue() {
                       }
                       isDisabled={isPending}
                     >
-                      <SvgCheckCircle1 width={15} height={15} />
+                      <SvgCheckCircle1
+                        width={15}
+                        height={15}
+                        style={{ marginRight: 4 }}
+                      />
                       <Trans>Approve</Trans>
                     </Button>
                     <Button
