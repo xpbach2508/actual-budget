@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 
 import { Button } from '@actual-app/components/button';
@@ -27,20 +27,41 @@ import { useAccounts } from '#hooks/useAccounts';
 import { useCategories } from '#hooks/useCategories';
 import { useDateFormat } from '#hooks/useDateFormat';
 import { useFormat } from '#hooks/useFormat';
+import { useIsInViewport } from '#hooks/useIsInViewport';
+import { usePagedQuery } from '#hooks/usePagedQuery';
 import { usePayeesById } from '#hooks/usePayees';
-import { useQuery } from '#hooks/useQuery';
 import { addNotification } from '#notifications/notificationsSlice';
 import { useDispatch } from '#redux';
 
 import { buildQuickAddTransaction } from './reviewQueueUtils';
 
+const reviewPageOptions = { pageCount: 50 };
+
+export function makeReviewQuery() {
+  return q('transactions')
+    .filter({ cleared: false })
+    .orderBy({ date: 'desc' })
+    .select('*');
+}
+
 export function ReviewQueue() {
   const { t } = useTranslation();
   const dispatch = useDispatch();
-  const { data: transactions, isLoading } = useQuery<TransactionEntity>(
-    () => q('transactions').filter({ cleared: false }).select('*'),
-    [],
-  );
+  const reviewQuery = useMemo(makeReviewQuery, []);
+  const {
+    data: transactions,
+    isLoading,
+    hasNext,
+    fetchNext,
+  } = usePagedQuery<TransactionEntity>(reviewQuery, reviewPageOptions);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const isLoadMoreVisible = useIsInViewport(loadMoreRef);
+
+  useEffect(() => {
+    if (hasNext && isLoadMoreVisible) {
+      void fetchNext();
+    }
+  }, [fetchNext, hasNext, isLoadMoreVisible]);
   const { data: payeesById } = usePayeesById();
   const { data: categoriesData } = useCategories();
   const { data: accounts } = useAccounts();
@@ -404,6 +425,9 @@ export function ReviewQueue() {
                 </View>
               );
             })}
+            {hasNext && (
+              <View ref={loadMoreRef} style={{ flexShrink: 0, height: 1 }} />
+            )}
           </View>
         ) : (
           <View
