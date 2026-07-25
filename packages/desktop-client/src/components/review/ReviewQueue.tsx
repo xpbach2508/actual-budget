@@ -201,7 +201,7 @@ export function ReviewQueue() {
               onSelect={setQuickAddDate}
               inputProps={{
                 'aria-label': t('Date'),
-                style: { flex: '1 1 120px' },
+                style: { width: '100%' },
               }}
               containerProps={{ style: { flex: '1 1 120px' } }}
             />
