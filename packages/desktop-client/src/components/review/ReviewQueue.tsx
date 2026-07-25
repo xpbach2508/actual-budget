@@ -21,8 +21,10 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { Error as ErrorAlert } from '#components/alerts';
 import { Page } from '#components/Page';
+import { DateSelect } from '#components/select/DateSelect';
 import { useAccounts } from '#hooks/useAccounts';
 import { useCategories } from '#hooks/useCategories';
+import { useDateFormat } from '#hooks/useDateFormat';
 import { useFormat } from '#hooks/useFormat';
 import { usePayeesById } from '#hooks/usePayees';
 import { useQuery } from '#hooks/useQuery';
@@ -38,6 +40,7 @@ export function ReviewQueue() {
   const { data: payeesById } = usePayeesById();
   const { data: categoriesData } = useCategories();
   const { data: accounts } = useAccounts();
+  const dateFormat = useDateFormat() || 'MM/dd/yyyy';
   const formatAmount = useFormat();
 
   const [quickAddAmount, setQuickAddAmount] = useState('');
@@ -192,12 +195,15 @@ export function ReviewQueue() {
               onChange={event => setQuickAddAmount(event.target.value)}
               style={{ flex: '1 1 120px' }}
             />
-            <Input
-              aria-label={t('Date')}
-              placeholder={t('YYYY-MM-DD')}
+            <DateSelect
               value={quickAddDate}
-              onChange={event => setQuickAddDate(event.target.value)}
-              style={{ flex: '1 1 120px' }}
+              dateFormat={dateFormat}
+              onSelect={setQuickAddDate}
+              inputProps={{
+                'aria-label': t('Date'),
+                style: { flex: '1 1 120px' },
+              }}
+              containerProps={{ style: { flex: '1 1 120px' } }}
             />
             <Select
               options={accountOptions}
