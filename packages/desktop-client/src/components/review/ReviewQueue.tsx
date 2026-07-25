@@ -20,6 +20,7 @@ import type { TransactionEntity } from '@actual-app/core/types/models';
 import { v4 as uuidv4 } from 'uuid';
 
 import { Error as ErrorAlert } from '#components/alerts';
+import { PayeeAutocomplete } from '#components/autocomplete/PayeeAutocomplete';
 import { Page } from '#components/Page';
 import { DateSelect } from '#components/select/DateSelect';
 import { useAccounts } from '#hooks/useAccounts';
@@ -61,13 +62,6 @@ export function ReviewQueue() {
   const accountOptions = useMemo(
     () => (accounts ?? []).map(account => [account.id, account.name] as const),
     [accounts],
-  );
-  const payeeOptions = useMemo(
-    () =>
-      Object.values(payeesById ?? {})
-        .filter(payee => !payee.transfer_acct)
-        .map(payee => [payee.id, payee.name] as const),
-    [payeesById],
   );
   const transferOptions = useMemo(
     () =>
@@ -212,12 +206,12 @@ export function ReviewQueue() {
               defaultLabel={t('Account')}
               style={{ flex: '1 1 120px' }}
             />
-            <Select
-              options={payeeOptions}
+            <PayeeAutocomplete
               value={quickAddPayee}
-              onChange={setQuickAddPayee}
-              defaultLabel={t('Payee')}
-              style={{ flex: '1 1 120px' }}
+              onSelect={payee => setQuickAddPayee(payee ?? '')}
+              showMakeTransfer={false}
+              inputProps={{ placeholder: t('Payee') }}
+              containerProps={{ style: { flex: '1 1 120px' } }}
             />
             <Select
               options={categoryOptions}
