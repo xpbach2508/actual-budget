@@ -8,7 +8,7 @@ Finish the existing `/review` prototype in the Actual Budget fork so bank-webhoo
 - Keep the inline Quick Add form at the top of the page. Required fields are amount, account, and date; manually added transactions are created with `cleared=true`.
 - List all transactions where `cleared=false`, including date, account, amount, payee, category, and raw notification notes.
 - Per queued transaction: edit category, set a transfer payee, approve by only setting `cleared=true`, or delete.
-- Replace prototype-specific UI, Vietnamese literals, browser alerts, and ad-hoc mutation handling with Actual’s established components, translation, validation, async feedback, and responsive layout patterns.
+- Replace prototype-specific UI, Vietnamese literals, emoji icons, browser alerts, and ad-hoc mutation handling with Actual’s established components, translation, validation, async feedback, and responsive layout patterns. Use the fork’s existing SVG icon set for a Lucide/shadcn-like visual style; do not add shadcn as a dependency.
 - Add focused automated coverage for the transaction mutations and review-page behaviors that can be tested within the project’s conventions.
 
 ## Non-goals
