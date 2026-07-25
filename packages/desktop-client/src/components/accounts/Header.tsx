@@ -40,6 +40,7 @@ import { AnimatedRefresh } from '#components/AnimatedRefresh';
 import { Search } from '#components/common/Search';
 import { FilterButton } from '#components/filters/FiltersMenu';
 import { FiltersStack } from '#components/filters/FiltersStack';
+import { MonthPicker } from '#components/filters/MonthPicker';
 import type { SavedFilter } from '#components/filters/SavedFilterMenuButton';
 import { NotesButton } from '#components/NotesButton';
 import { SelectedTransactionsButton } from '#components/transactions/SelectedTransactionsButton';
@@ -372,7 +373,37 @@ export function AccountHeader({
               <Trans>Add New</Trans>
             </Button>
           )}
-          <View style={{ flexShrink: 0 }}>
+          <View
+            style={{
+              flexShrink: 0,
+              flexDirection: 'row',
+              gap: 5,
+              alignItems: 'center',
+            }}
+          >
+            <MonthPicker
+              activeMonthValue={
+                (filterConditions?.find(
+                  f => f.field === 'date' && f.options?.month,
+                )?.value as string) || null
+              }
+              onApplyMonthFilter={value => {
+                const activeFilter = filterConditions?.find(
+                  f => f.field === 'date' && f.options?.month,
+                );
+                if (activeFilter) {
+                  onDeleteFilter(activeFilter);
+                }
+                if (value) {
+                  onApplyFilter({
+                    field: 'date',
+                    op: 'is',
+                    value,
+                    options: { month: true },
+                  } as RuleConditionEntity);
+                }
+              }}
+            />
             {/* @ts-expect-error fix me */}
             <FilterButton onApply={onApplyFilter} />
           </View>
