@@ -21,7 +21,7 @@
 ## File Structure
 
 - `packages/loot-core/src/server/accounts/app.ts` — links a manually-added lot to its created transaction.
-- `packages/loot-core/src/server/accounts/app.test.ts` — regression coverage for the manual-add lot linkage.
+- `packages/loot-core/src/server/accounts/app-bank-sync.test.ts` — existing account-handler harness extended with a regression test for manual-add lot linkage.
 - `packages/desktop-client/src/components/transactions/goldQuantity.ts` — pure map construction and Vietnamese quantity formatting.
 - `packages/desktop-client/src/components/transactions/goldQuantity.test.ts` — pure helper coverage.
 - `packages/desktop-client/src/components/transactions/TransactionList.tsx` — conditionally queries Gold lots and passes the derived values to the table.
@@ -32,7 +32,7 @@
 
 **Files:**
 - Modify: `packages/loot-core/src/server/accounts/app.ts:724-748`
-- Test: `packages/loot-core/src/server/accounts/app.test.ts`
+- Test: `packages/loot-core/src/server/accounts/app-bank-sync.test.ts`
 
 **Interfaces:**
 - Produces: `gold_lots.transfer_id` equal to the ID returned by `db.insertTransaction` for a manual addition.
@@ -40,21 +40,28 @@
 
 - [ ] **Step 1: Write the failing server regression test**
 
-Add a test that mocks `db.insertTransaction` as returning `manual-transaction-id`, invokes the registered `gold-manual-add` handler with a valid Gold account, and asserts its `db.insertWithSchema('gold_lots', values)` call contains:
+Extend the existing account-handler harness: use `global.emptyDatabase()` and `loadMappings()` in `beforeEach`, insert an account with `account_subtype: 'gold'`, invoke `app.handlers['gold-manual-add']`, then query the created rows:
 
 ```ts
-expect(insertWithSchema).toHaveBeenCalledWith(
-  'gold_lots',
-  expect.objectContaining({ transfer_id: 'manual-transaction-id' }),
+const transaction = await db.first<{ id: string }>(
+  'SELECT id FROM transactions WHERE acct = ? AND tombstone = 0',
+  ['gold-account'],
 );
+const lot = await db.first<{ transfer_id: string }>(
+  'SELECT transfer_id FROM gold_lots WHERE account_id = ? AND tombstone = 0',
+  ['gold-account'],
+);
+expect(lot?.transfer_id).toBe(transaction?.id);
 ```
+
+The direct database assertion avoids mocking the sync-aware `insertWithSchema` path.
 
 - [ ] **Step 2: Run the focused test and verify failure**
 
 Run:
 
 ```bash
-node .yarn/releases/yarn-4.17.1.cjs vitest run packages/loot-core/src/server/accounts/app.test.ts
+node .yarn/releases/yarn-4.17.1.cjs vitest run packages/loot-core/src/server/accounts/app-bank-sync.test.ts
 ```
 
 Expected: FAIL because the lot is currently inserted without `transfer_id`.
@@ -89,7 +96,7 @@ Expected: PASS.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/loot-core/src/server/accounts/app.ts packages/loot-core/src/server/accounts/app.test.ts
+git add packages/loot-core/src/server/accounts/app.ts packages/loot-core/src/server/accounts/app-bank-sync.test.ts
 git commit -m "fix: link manual gold additions to transactions"
 ```
 
@@ -177,19 +184,18 @@ git commit -m "feat: add gold quantity display helpers"
 
 - [ ] **Step 1: Write a failing table render test**
 
-Mock `TransactionsTable` and render `TransactionList` with a Gold account plus a mocked `gold_lots` query returning a lot linked to the first transaction. Assert its `goldQuantityByTransaction` prop contains the linked value. Render again with `account_subtype: null` and assert that prop is `undefined`.
+Use the existing direct `TransactionTable` test harness. Pass:
 
 ```ts
-expect(mockTransactionTable).toHaveBeenLastCalledWith(
-  expect.objectContaining({
-    goldQuantityByTransaction: new Map([['gold-transaction', 1.5]]),
-  }),
-  expect.anything(),
-);
-expect(mockTransactionTable).toHaveBeenLastCalledWith(
-  expect.objectContaining({ goldQuantityByTransaction: undefined }),
-  expect.anything(),
-);
+goldQuantityByTransaction: new Map([['gold-transaction', 1.5]]),
+```
+
+and assert the new header/cell is not yet rendered. This tests the table API without requiring a new `TransactionList` mocking harness.
+
+```ts
+expect(screen.getByText('Số chỉ')).toBeInTheDocument();
+expect(screen.getByText('1,5 chỉ')).toBeInTheDocument();
+```
 
 - [ ] **Step 2: Run the focused test and verify failure**
 
@@ -199,7 +205,7 @@ Run:
 node .yarn/releases/yarn-4.17.1.cjs vitest run packages/desktop-client/src/components/transactions/TransactionsTable.test.tsx
 ```
 
-Expected: FAIL because no Gold-lot query or table prop exists.
+Expected: FAIL because `TransactionTableProps` has no Gold-quantity prop and the table has no column.
 
 - [ ] **Step 3: Implement conditional lot loading and prop plumbing**
 
@@ -222,11 +228,13 @@ const goldQuantityByTransaction = useMemo(
 
 Pass `goldQuantityByTransaction` only when `isGoldAccount`; add the optional prop to `TransactionTableProps` and thread it into `TransactionTableInnerProps`.
 
-- [ ] **Step 4: Run the focused test and verify progress**
+- [ ] **Step 4: Run web typecheck for the new prop plumbing**
 
-Run the command from Step 2.
+```bash
+node .yarn/releases/yarn-4.17.1.cjs workspace @actual-app/web typecheck
+```
 
-Expected: PASS.
+Expected: all strict files pass. The render assertions remain red until Task 4.
 
 - [ ] **Step 5: Commit**
 
@@ -258,7 +266,11 @@ Use an unlinked revaluation transaction for the empty-cell assertion. Keep the n
 
 - [ ] **Step 2: Run the focused test and verify failure**
 
-Run the command from Task 3 Step 2.
+Run:
+
+```bash
+node .yarn/releases/yarn-4.17.1.cjs vitest run packages/desktop-client/src/components/transactions/TransactionsTable.test.tsx
+```
 
 Expected: FAIL because the table does not yet render the column.
 
