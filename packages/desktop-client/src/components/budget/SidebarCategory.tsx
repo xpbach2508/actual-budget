@@ -138,7 +138,9 @@ export function SidebarCategory({
       innerRef={innerRef}
       style={{
         width: 200 + 100 * categoryExpandedState,
-        overflow: 'hidden',
+        // The picker is anchored to this row; it must escape the normal
+        // clipped sidebar while it is open.
+        overflow: iconPickerOpen ? 'visible' : 'hidden',
         '& .hover-visible': {
           display: 'none',
         },
