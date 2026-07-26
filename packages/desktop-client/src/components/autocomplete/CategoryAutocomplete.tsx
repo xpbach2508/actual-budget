@@ -15,6 +15,8 @@ import { SvgSplit } from '@actual-app/components/icons/v0';
 import { styles } from '@actual-app/components/styles';
 import { Text } from '@actual-app/components/text';
 import { TextOneLine } from '@actual-app/components/text-one-line';
+
+import { CategoryIcon } from '#components/categories/CategoryIcon';
 import { theme } from '@actual-app/components/theme';
 import { View } from '@actual-app/components/view';
 import { integerToCurrency } from '@actual-app/core/shared/util';
@@ -435,10 +437,13 @@ function CategoryItem({
       {...props}
     >
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-        <TextOneLine>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+          {item.id !== 'to-budget' && item.id !== 'split' && <CategoryIcon icon={item.icon} />}
+          <TextOneLine>
           {item.name}
           {item.hidden || item.group?.hidden ? ' ' + t('(hidden)') : ''}
-        </TextOneLine>
+          </TextOneLine>
+        </View>
         <TextOneLine
           style={{
             display: !showBalances ? 'none' : undefined,

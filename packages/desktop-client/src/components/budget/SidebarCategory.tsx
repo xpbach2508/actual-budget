@@ -13,6 +13,7 @@ import type {
   CategoryGroupEntity,
 } from '@actual-app/core/types/models';
 
+import { CategoryIcon } from '#components/categories/CategoryIcon';
 import { InputCell } from '#components/table';
 import { useContextMenu } from '#hooks/useContextMenu';
 import { useGlobalPref } from '#hooks/useGlobalPref';
@@ -98,7 +99,8 @@ export function SidebarCategory({
       }}
       ref={triggerRef}
     >
-      <TextOneLine data-testid="category-name">{category.name}</TextOneLine>
+      <CategoryIcon icon={category.icon} />
+      <TextOneLine data-testid="category-name" style={{ marginLeft: 5 }}>{category.name}</TextOneLine>
       <View style={{ flexShrink: 0, marginLeft: 5 }}>
         <Button
           variant="bare"
