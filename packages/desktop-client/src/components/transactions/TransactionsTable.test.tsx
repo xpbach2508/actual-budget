@@ -150,6 +150,7 @@ type LiveTransactionTableProps = {
   showCategory: boolean;
   showCleared: boolean;
   isAdding: boolean;
+  goldQuantityByTransaction?: ReadonlyMap<string, number>;
   onTransactionsChange?: (newTrans: TransactionEntity[]) => void;
   onCloseAddTransaction?: () => void;
 };
@@ -452,6 +453,26 @@ function expectToBeEditingField(
 }
 
 describe('Transactions', () => {
+  test('shows a read-only gold quantity column when quantities are provided', () => {
+    const transactions = generateTransactions(2);
+    transactions[0].id = 'gold-transaction';
+    const { container } = renderTransactions({
+      transactions,
+      goldQuantityByTransaction: new Map([['gold-transaction', 1.5]]),
+    });
+
+    expect(screen.getByText('Số chỉ')).toBeInTheDocument();
+    expect(screen.getByText('1,5 chỉ')).toBeInTheDocument();
+    expect(queryField(container, 'gold-quantity', 'div', 1).textContent).toBe(
+      '',
+    );
+  });
+
+  test('hides the gold quantity column when quantities are not provided', () => {
+    renderTransactions();
+
+    expect(screen.queryByText('Số chỉ')).not.toBeInTheDocument();
+  });
   test('preview transactions show schedule name in notes', async () => {
     const scheduleName = 'Monthly rent';
     schedules = [

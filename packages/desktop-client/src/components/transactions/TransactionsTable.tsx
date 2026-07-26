@@ -140,6 +140,7 @@ import { aqlQuery } from '#queries/aqlQuery';
 import { useDispatch } from '#redux';
 import { getStatusLabel } from '#util/schedule';
 
+import { formatGoldQuantity } from './goldQuantity';
 import {
   deserializeTransaction,
   isLastChild,
@@ -160,6 +161,7 @@ type TransactionHeaderProps = {
   showCategory: boolean;
   showBalance: boolean;
   showCleared: boolean;
+  showGoldQuantity: boolean;
   scrollWidth: number;
   showSelection: boolean;
   onSort: (field: string, ascDesc: 'asc' | 'desc') => void;
@@ -174,6 +176,7 @@ const TransactionHeader = memo(
     showCategory,
     showBalance,
     showCleared,
+    showGoldQuantity,
     scrollWidth,
     onSort,
     ascDesc,
@@ -317,6 +320,15 @@ const TransactionHeader = memo(
             onSort('deposit', selectAscDesc(field, ascDesc, 'deposit', 'desc'))
           }
         />
+        {showGoldQuantity && (
+          <HeaderCell
+            value={t('Số chỉ')}
+            width={90}
+            alignItems="flex-end"
+            marginRight={-5}
+            id="gold-quantity"
+          />
+        )}
         {showBalance && (
           <HeaderCell
             value={t('Balance')}
@@ -927,6 +939,8 @@ type TransactionProps = {
   showBalance?: boolean;
   showCleared?: boolean;
   showZeroInDeposit?: boolean;
+  showGoldQuantity?: boolean;
+  goldQuantity?: number;
   style?: CSSProperties;
   selected?: boolean;
   highlighted?: boolean;
@@ -994,6 +1008,8 @@ const Transaction = memo(function Transaction({
   showBalance,
   showCleared,
   showZeroInDeposit,
+  showGoldQuantity,
+  goldQuantity,
   style,
   selected,
   highlighted,
@@ -1909,6 +1925,16 @@ const Transaction = memo(function Transaction({
           }}
         />
 
+        {showGoldQuantity && (
+          <Cell
+            name="gold-quantity"
+            value={formatGoldQuantity(goldQuantity)}
+            width={90}
+            textAlign="right"
+            readOnly
+          />
+        )}
+
         {showBalance && (
           <Cell
             /* Balance field for all transactions */
@@ -2362,6 +2388,7 @@ type TransactionTableInnerProps = {
   showCategory: boolean;
   currentAccountId: AccountEntity['id'];
   currentCategoryId: CategoryEntity['id'];
+  goldQuantityByTransaction?: ReadonlyMap<TransactionEntity['id'], number>;
   isAdding: boolean;
   isNew: (id: TransactionEntity['id']) => boolean;
   isMatched: (id: TransactionEntity['id']) => boolean;
@@ -2576,6 +2603,8 @@ function TransactionTableInner({
         expanded={isExpanded?.(trans.id)}
         matched={isMatched?.(trans.id)}
         showZeroInDeposit={isChildDeposit}
+        showGoldQuantity={props.goldQuantityByTransaction != null}
+        goldQuantity={props.goldQuantityByTransaction?.get(trans.id)}
         balance={balances?.[trans.id] ?? 0}
         focusedField={editing ? tableNavigator.focusedField : undefined}
         accounts={accounts}
@@ -2648,6 +2677,7 @@ function TransactionTableInner({
           showCategory={props.showCategory}
           showBalance={props.showBalances}
           showCleared={props.showCleared}
+          showGoldQuantity={props.goldQuantityByTransaction != null}
           scrollWidth={scrollWidth}
           onSort={props.onSort}
           ascDesc={props.ascDesc}
@@ -2744,6 +2774,7 @@ type TableState = {
 
 export type TransactionTableProps = {
   transactions: readonly TransactionEntity[];
+  goldQuantityByTransaction?: ReadonlyMap<TransactionEntity['id'], number>;
   loadMoreTransactions: () => void;
   accounts: AccountEntity[];
   categoryGroups: CategoryGroupEntity[];

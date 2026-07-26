@@ -1,6 +1,6 @@
 // @ts-strict-ignore
 // TODO: remove strict
-import { useCallback, useLayoutEffect, useRef } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import type { RefObject } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useTranslation } from 'react-i18next';
@@ -36,11 +36,13 @@ import type { TableHandleRef } from '#components/table';
 import { isValidBoundaryDrop } from '#hooks/useDragDrop';
 import type { DropPosition } from '#hooks/useDragDrop';
 import { useNavigate } from '#hooks/useNavigate';
+import { useQuery } from '#hooks/useQuery';
 import { useSyncedPref } from '#hooks/useSyncedPref';
 import { pushModal } from '#modals/modalsSlice';
 import { addNotification } from '#notifications/notificationsSlice';
 import { useDispatch } from '#redux';
 
+import { getGoldQuantityByTransaction } from './goldQuantity';
 import { shouldApplyRuleChange } from './table/utils';
 import { TransactionTable } from './TransactionsTable';
 import type { TransactionTableProps } from './TransactionsTable';
@@ -329,6 +331,22 @@ export function TransactionList({
   onMakeAsNonSplitTransactions,
 }: TransactionListProps) {
   const { t } = useTranslation();
+  const isGoldAccount = account?.account_subtype === 'gold';
+  const { data: goldLots } = useQuery<{
+    transfer_id: string | null;
+    quantity_chi: number;
+    tombstone: number;
+  }>(
+    () =>
+      isGoldAccount
+        ? q('gold_lots').filter({ account_id: account.id }).select('*')
+        : null,
+    [account?.id, isGoldAccount],
+  );
+  const goldQuantityByTransaction = useMemo(
+    () => getGoldQuantityByTransaction(goldLots ?? []),
+    [goldLots],
+  );
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -743,6 +761,9 @@ export function TransactionList({
         showCategory
         currentAccountId={account && account.id}
         currentCategoryId={category && category.id}
+        goldQuantityByTransaction={
+          isGoldAccount ? goldQuantityByTransaction : undefined
+        }
         isAdding={isAdding}
         isNew={isNew}
         isMatched={isMatched}
