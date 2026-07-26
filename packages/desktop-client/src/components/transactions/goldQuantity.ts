@@ -1,7 +1,7 @@
 export type GoldLotQuantity = {
   transfer_id: string | null;
   quantity_chi: number;
-  tombstone: number;
+  tombstone: boolean | number;
 };
 
 export function getGoldQuantityByTransaction(
@@ -9,7 +9,7 @@ export function getGoldQuantityByTransaction(
 ): ReadonlyMap<string, number> {
   return new Map(
     lots
-      .filter(lot => lot.tombstone === 0 && lot.transfer_id != null)
+      .filter(lot => !lot.tombstone && lot.transfer_id != null)
       .map(lot => [lot.transfer_id!, lot.quantity_chi]),
   );
 }

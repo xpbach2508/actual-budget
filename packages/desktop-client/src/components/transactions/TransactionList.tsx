@@ -335,7 +335,7 @@ export function TransactionList({
   const { data: goldLots } = useQuery<{
     transfer_id: string | null;
     quantity_chi: number;
-    tombstone: number;
+    tombstone: boolean | number;
   }>(
     () =>
       isGoldAccount
