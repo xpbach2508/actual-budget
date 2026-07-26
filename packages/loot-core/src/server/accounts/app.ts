@@ -604,6 +604,33 @@ async function assertGoldAccount(accountId: AccountEntity['id']) {
   return account;
 }
 
+async function revalueGoldAccount(
+  accountId: AccountEntity['id'],
+  pricePerChi: number,
+) {
+  const lots = await db.first<{ quantity_chi: number }>(
+    'SELECT COALESCE(SUM(quantity_chi), 0) AS quantity_chi FROM gold_lots WHERE account_id = ? AND tombstone = 0',
+    [accountId],
+  );
+  const currentValue = (lots?.quantity_chi ?? 0) * pricePerChi;
+  const balance = await getAccountBalance({
+    id: accountId,
+    cutoff: monthUtils.currentDay(),
+  });
+  const adjustment = currentValue - balance;
+
+  if (adjustment !== 0) {
+    await db.insertTransaction({
+      account: accountId,
+      amount: adjustment,
+      category: null,
+      date: monthUtils.currentDay(),
+      cleared: true,
+      notes: 'Gold price revaluation',
+    });
+  }
+}
+
 async function createAccount({
   name,
   balance = 0,
@@ -689,6 +716,10 @@ async function purchaseGold({
     totalCost,
     transferId: transfer.transfer_id,
   });
+  const account = await assertGoldAccount(accountId);
+  if (account.gold_current_price_per_chi != null) {
+    await revalueGoldAccount(accountId, account.gold_current_price_per_chi);
+  }
 
   return { transferId: transfer.transfer_id };
 }
@@ -709,6 +740,10 @@ async function addGoldManually({
     cleared: true,
   });
   await insertGoldLot({ accountId, date, quantityChi, totalCost });
+  const account = await assertGoldAccount(accountId);
+  if (account.gold_current_price_per_chi != null) {
+    await revalueGoldAccount(accountId, account.gold_current_price_per_chi);
+  }
   return {};
 }
 
@@ -723,10 +758,12 @@ async function updateGoldPrice({
   if (!Number.isFinite(pricePerChi) || pricePerChi < 0) {
     throw new Error('Gold price must be a non-negative number');
   }
+  const storedPrice = amountToInteger(pricePerChi);
   await db.update('accounts', {
     id: accountId,
-    gold_current_price_per_chi: amountToInteger(pricePerChi),
+    gold_current_price_per_chi: storedPrice,
   });
+  await revalueGoldAccount(accountId, storedPrice);
   return {};
 }
 
