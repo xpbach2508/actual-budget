@@ -15,6 +15,7 @@ vi.mock('./sync', async () => ({
 
 const simpleFinBatchSyncHandler = app.handlers['simplefin-batch-sync'];
 const accountsBankSyncHandler = app.handlers['accounts-bank-sync'];
+const goldManualAddHandler = app.handlers['gold-manual-add'];
 
 function insertBank(bank: { id: string; bank_id: string; name: string }) {
   db.runQuery(
@@ -50,6 +51,34 @@ beforeEach(async () => {
   });
   await global.emptyDatabase()();
   await loadMappings();
+});
+
+describe('gold-manual-add', () => {
+  it('links the created gold lot to its transaction', async () => {
+    await db.insertAccount({
+      id: 'gold-account',
+      name: 'Gold',
+      account_subtype: 'gold',
+    });
+
+    await goldManualAddHandler({
+      accountId: 'gold-account',
+      date: '2026-07-26',
+      quantityChi: 1.5,
+      totalCost: 15000000,
+    });
+
+    const transaction = await db.first<{ id: string }>(
+      'SELECT id FROM transactions WHERE acct = ? AND tombstone = 0',
+      ['gold-account'],
+    );
+    const lot = await db.first<{ transfer_id: string }>(
+      'SELECT transfer_id FROM gold_lots WHERE account_id = ? AND tombstone = 0',
+      ['gold-account'],
+    );
+
+    expect(lot?.transfer_id).toBe(transaction?.id);
+  });
 });
 
 describe('simpleFinBatchSync', () => {

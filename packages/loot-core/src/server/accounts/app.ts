@@ -732,14 +732,20 @@ async function addGoldManually({
 }: GoldLotInput) {
   await assertGoldAccount(accountId);
   validateGoldLot({ accountId, date, quantityChi, totalCost });
-  await db.insertTransaction({
+  const transactionId = await db.insertTransaction({
     account: accountId,
     amount: amountToInteger(totalCost),
     category: null,
     date,
     cleared: true,
   });
-  await insertGoldLot({ accountId, date, quantityChi, totalCost });
+  await insertGoldLot({
+    accountId,
+    date,
+    quantityChi,
+    totalCost,
+    transferId: transactionId,
+  });
   const account = await assertGoldAccount(accountId);
   if (account.gold_current_price_per_chi != null) {
     await revalueGoldAccount(accountId, account.gold_current_price_per_chi);
