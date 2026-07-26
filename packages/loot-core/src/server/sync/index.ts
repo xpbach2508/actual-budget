@@ -99,6 +99,7 @@ function apply(msg: Message, prev?: boolean) {
 
       db.runQuery(db.cache(query.sql), query.params);
     } catch (error) {
+      console.error('Sync schema application failed', { error, query });
       throw new SyncError('invalid-schema', {
         error: { message: error.message, stack: error.stack },
         query,
