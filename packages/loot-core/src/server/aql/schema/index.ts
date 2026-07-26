@@ -79,6 +79,16 @@ export const schema = {
     last_sync: f('string'),
     bank_sync_status: f('string'),
     account_subtype: f('string'),
+    gold_current_price_per_chi: f('integer'),
+  },
+  gold_lots: {
+    id: f('id'),
+    account_id: f('id', { ref: 'accounts', required: true }),
+    date: f('date', { required: true }),
+    quantity_chi: f('float', { required: true }),
+    cost_per_chi: f('integer', { required: true }),
+    transfer_id: f('id'),
+    tombstone: f('boolean'),
   },
   categories: {
     id: f('id'),
