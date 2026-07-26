@@ -720,6 +720,10 @@ async function purchaseGold({
   if (account.gold_current_price_per_chi != null) {
     await revalueGoldAccount(accountId, account.gold_current_price_per_chi);
   }
+  connection.send('sync-event', {
+    type: 'success',
+    tables: ['transactions', 'gold_lots', 'accounts'],
+  });
 
   return { transferId: transfer.transfer_id };
 }
@@ -750,6 +754,10 @@ async function addGoldManually({
   if (account.gold_current_price_per_chi != null) {
     await revalueGoldAccount(accountId, account.gold_current_price_per_chi);
   }
+  connection.send('sync-event', {
+    type: 'success',
+    tables: ['transactions', 'gold_lots', 'accounts'],
+  });
   return {};
 }
 
@@ -770,6 +778,10 @@ async function updateGoldPrice({
     gold_current_price_per_chi: storedPrice,
   });
   await revalueGoldAccount(accountId, storedPrice);
+  connection.send('sync-event', {
+    type: 'success',
+    tables: ['transactions', 'gold_lots', 'accounts'],
+  });
   return {};
 }
 

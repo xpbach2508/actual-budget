@@ -118,12 +118,28 @@ function useGoldMutation<T>(
     AccountHandlers,
     'gold-purchase' | 'gold-manual-add' | 'gold-update-price'
   >,
+  successMessage: string,
 ): UseMutationResult<unknown, Error, T> {
   const queryClient = useQueryClient();
+  const dispatch = useDispatch();
+  const { t } = useTranslation();
 
   return useMutation({
     mutationFn: (payload: T) => send(command, payload as never),
-    onSuccess: () => invalidateQueries(queryClient),
+    onSuccess: () => {
+      invalidateQueries(queryClient);
+      dispatch(
+        addNotification({
+          notification: { type: 'message', message: t(successMessage) },
+        }),
+      );
+    },
+    onError: error =>
+      dispatchErrorNotification(
+        dispatch,
+        t('There was an error saving Gold. Please try again.'),
+        error,
+      ),
   });
 }
 
@@ -132,7 +148,10 @@ export function useGoldPurchaseMutation(): UseMutationResult<
   Error,
   GoldPurchasePayload
 > {
-  return useGoldMutation<GoldPurchasePayload>('gold-purchase');
+  return useGoldMutation<GoldPurchasePayload>(
+    'gold-purchase',
+    'Gold purchase added.',
+  );
 }
 
 export function useGoldManualAddMutation(): UseMutationResult<
@@ -140,7 +159,10 @@ export function useGoldManualAddMutation(): UseMutationResult<
   Error,
   GoldManualAddPayload
 > {
-  return useGoldMutation<GoldManualAddPayload>('gold-manual-add');
+  return useGoldMutation<GoldManualAddPayload>(
+    'gold-manual-add',
+    'Gold added.',
+  );
 }
 
 export function useGoldPriceMutation(): UseMutationResult<
@@ -148,7 +170,10 @@ export function useGoldPriceMutation(): UseMutationResult<
   Error,
   GoldPricePayload
 > {
-  return useGoldMutation<GoldPricePayload>('gold-update-price');
+  return useGoldMutation<GoldPricePayload>(
+    'gold-update-price',
+    'Gold price updated.',
+  );
 }
 
 type CloseAccountPayload = {
