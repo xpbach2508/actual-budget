@@ -77,8 +77,32 @@ export function checkSyncingMode(mode: SyncingMode): boolean {
   }
 }
 
+function ensureGoldLotsTable(dataset: string) {
+  if (dataset !== 'gold_lots') {
+    return;
+  }
+
+  // A worker may receive a new dataset before its pending migration runs,
+  // such as after an application upgrade while the worker stays alive.
+  db.execQuery(`
+    CREATE TABLE IF NOT EXISTS gold_lots (
+      id TEXT PRIMARY KEY,
+      account_id TEXT NOT NULL,
+      date TEXT NOT NULL,
+      quantity_chi REAL NOT NULL,
+      cost_per_chi INTEGER NOT NULL,
+      transfer_id TEXT DEFAULT NULL,
+      tombstone INTEGER NOT NULL DEFAULT 0
+    );
+    CREATE INDEX IF NOT EXISTS gold_lots_account_id
+      ON gold_lots(account_id, tombstone);
+  `);
+}
+
 function apply(msg: Message, prev?: boolean) {
   const { dataset, row, column, value } = msg;
+
+  ensureGoldLotsTable(dataset);
 
   if (dataset === 'prefs') {
     // Do nothing, it doesn't exist in the db
@@ -99,7 +123,6 @@ function apply(msg: Message, prev?: boolean) {
 
       db.runQuery(db.cache(query.sql), query.params);
     } catch (error) {
-      console.error('Sync schema application failed', { error, query });
       throw new SyncError('invalid-schema', {
         error: { message: error.message, stack: error.stack },
         query,
@@ -110,6 +133,8 @@ function apply(msg: Message, prev?: boolean) {
 
 // TODO: convert to `whereIn`
 async function fetchAll(table, ids) {
+  ensureGoldLotsTable(table);
+
   let results = [];
 
   // was 500, but that caused a stack overflow in Safari
