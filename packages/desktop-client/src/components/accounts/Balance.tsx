@@ -7,6 +7,7 @@ import { SvgArrowButtonRight1 } from '@actual-app/components/icons/v2';
 import { Text } from '@actual-app/components/text';
 import { theme } from '@actual-app/components/theme';
 import { View } from '@actual-app/components/view';
+import { calculateGoldSummary } from '@actual-app/core/shared/gold';
 import { q } from '@actual-app/core/shared/query';
 import type { Query } from '@actual-app/core/shared/query';
 import { getScheduledAmount } from '@actual-app/core/shared/schedules';
@@ -19,9 +20,11 @@ import { PrivacyFilter } from '#components/PrivacyFilter';
 import { CellValue, CellValueText } from '#components/spreadsheet/CellValue';
 import { useCachedSchedules } from '#hooks/useCachedSchedules';
 import { useFormat } from '#hooks/useFormat';
+import { useQuery } from '#hooks/useQuery';
 import { useSelectedItems } from '#hooks/useSelected';
 import { useSheetValue } from '#hooks/useSheetValue';
 import type { Binding } from '#spreadsheet';
+import { formatGoldQuantity } from '../transactions/goldQuantity';
 
 type DetailedBalanceProps = {
   name: string;
@@ -193,6 +196,18 @@ export function Balances({
   filteredAmount,
 }: BalancesProps) {
   const selectedItems = useSelectedItems();
+  const isGoldAccount = account?.account_subtype === 'gold';
+  const { data: goldLots } = useQuery<{
+    quantity_chi: number;
+    cost_per_chi: number;
+  }>(
+    () =>
+      isGoldAccount && account
+        ? q('gold_lots').filter({ account_id: account.id }).select('*')
+        : null,
+    [account?.id, isGoldAccount],
+  );
+  const goldQuantity = calculateGoldSummary(goldLots ?? [], 0).quantityChi;
   const buttonRef = useRef<HTMLButtonElement>(null);
   const isButtonHovered = useHover(buttonRef as RefObject<HTMLButtonElement>);
 
@@ -217,31 +232,43 @@ export function Balances({
           paddingBottom: 1,
         }}
       >
-        <CellValue
-          binding={
-            { ...balanceQuery, value: 0 } as Binding<
-              'balance',
-              `balance-query-${string}`
-            >
-          }
-          type="financial"
-        >
-          {props => (
-            <CellValueText
-              {...props}
-              style={{
-                fontSize: 22,
-                fontWeight: 400,
-                color:
-                  props.value < 0
-                    ? theme.numberNegative
-                    : props.value > 0
-                      ? theme.numberPositive
-                      : theme.pageTextSubdued,
-              }}
-            />
-          )}
-        </CellValue>
+        {isGoldAccount ? (
+          <Text
+            style={{
+              fontSize: 22,
+              fontWeight: 400,
+              color: theme.numberPositive,
+            }}
+          >
+            {formatGoldQuantity(goldQuantity)}
+          </Text>
+        ) : (
+          <CellValue
+            binding={
+              { ...balanceQuery, value: 0 } as Binding<
+                'balance',
+                `balance-query-${string}`
+              >
+            }
+            type="financial"
+          >
+            {props => (
+              <CellValueText
+                {...props}
+                style={{
+                  fontSize: 22,
+                  fontWeight: 400,
+                  color:
+                    props.value < 0
+                      ? theme.numberNegative
+                      : props.value > 0
+                        ? theme.numberPositive
+                        : theme.pageTextSubdued,
+                }}
+              />
+            )}
+          </CellValue>
+        )}
 
         <SvgArrowButtonRight1
           style={{
