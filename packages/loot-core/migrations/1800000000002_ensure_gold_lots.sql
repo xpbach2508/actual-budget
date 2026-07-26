@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS gold_lots (
   id TEXT PRIMARY KEY,
   account_id TEXT,
-  date TEXT,
+  date INTEGER,
   quantity_chi REAL,
   cost_per_chi INTEGER,
   transfer_id TEXT DEFAULT NULL,
