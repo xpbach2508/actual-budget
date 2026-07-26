@@ -4,14 +4,14 @@
 
 **Goal:** Automatically run only the fork's native-ARM64 Docker publishing workflow on pushes to `master`.
 
-**Architecture:** The fork image workflow uses GitHub-hosted `ubuntu-latest-arm64` to build `linux/arm64` natively. Upstream build, check, and CodeQL workflows retain manual dispatch but no longer subscribe to push events, preventing their queued jobs on every fork update.
+**Architecture:** The fork image workflow uses GitHub-hosted `ubuntu-24.04-arm` to build `linux/arm64` natively. Upstream build, check, and CodeQL workflows retain manual dispatch but no longer subscribe to push events, preventing their queued jobs on every fork update.
 
 **Tech Stack:** GitHub Actions, Docker Buildx, GHCR.
 
 ## Global Constraints
 
 - Automatic master push CI is limited to `.github/workflows/publish-fork-image.yml`.
-- Docker runner is `ubuntu-latest-arm64`.
+- Docker runner is `ubuntu-24.04-arm`.
 - `build.yml`, `check.yml`, and `codeql.yml` remain manually dispatchable.
 
 ---
@@ -24,7 +24,7 @@
 - [ ] **Step 1: Change the runner**
 
 ```yaml
-runs-on: ubuntu-latest-arm64
+runs-on: ubuntu-24.04-arm
 ```
 
 - [ ] **Step 2: Validate workflow syntax**
@@ -89,4 +89,4 @@ Open the pushed commit's checks. Expected: only **Publish Fork ARM64 Image** is 
 
 - [ ] **Step 3: Verify the image workflow**
 
-Expected runner label: `ubuntu-latest-arm64`; successful GHCR tags include `master` and `sha-<commit>`.
+Expected runner label: `ubuntu-24.04-arm`; successful GHCR tags include `master` and `sha-<commit>`.

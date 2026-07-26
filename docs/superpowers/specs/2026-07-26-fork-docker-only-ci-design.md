@@ -5,7 +5,7 @@ Keep the public fork's automatic GitHub Actions workload limited to publishing i
 
 ## Behavior
 - `Publish Fork ARM64 Image` remains triggered by pushes to `master`.
-- Its runner changes to GitHub-hosted native ARM64: `ubuntu-latest-arm64`.
+- Its runner changes to GitHub-hosted native ARM64: `ubuntu-24.04-arm`.
 - Upstream CI workflows that currently run on push (`build.yml`, `check.yml`, and `codeql.yml`) become manual-only via `workflow_dispatch` in this fork.
 - Their workflow files remain available for manually requested validation.
 
