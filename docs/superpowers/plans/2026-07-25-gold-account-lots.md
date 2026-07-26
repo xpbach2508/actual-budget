@@ -51,7 +51,7 @@ describe('gold calculations', () => {
 - [ ] **Step 2: Run the test and verify RED**
 
 ```bash
-node .yarn/releases/yarn-4.17.1.cjs workspace @actual-app/core test src/shared/gold.test.ts
+node .yarn/releases/yarn-4.17.1.cjs workspace @actual-app/core test:node src/shared/gold.test.ts
 ```
 
 Expected: import failure because `gold.ts` does not exist.
@@ -79,7 +79,7 @@ Add `gold_lots` to the AQL schema with id, account reference, date, quantity, co
 - [ ] **Step 4: Verify GREEN and typecheck**
 
 ```bash
-node .yarn/releases/yarn-4.17.1.cjs workspace @actual-app/core test src/shared/gold.test.ts
+node .yarn/releases/yarn-4.17.1.cjs workspace @actual-app/core test:node src/shared/gold.test.ts
 node .yarn/releases/yarn-4.17.1.cjs workspace @actual-app/web typecheck
 ```
 
@@ -101,7 +101,7 @@ Test `gold-purchase` creates two category-null linked transactions with opposite
 - [ ] **Step 2: Run server tests and verify RED**
 
 ```bash
-node .yarn/releases/yarn-4.17.1.cjs workspace @actual-app/core test src/server/accounts/gold.test.ts
+node .yarn/releases/yarn-4.17.1.cjs workspace @actual-app/core test:node src/server/accounts/gold.test.ts
 ```
 
 Expected: handlers are absent.
@@ -113,7 +113,7 @@ Register `gold-purchase`, `gold-manual-add`, and `gold-update-price` in `Account
 - [ ] **Step 4: Verify GREEN and commit**
 
 ```bash
-node .yarn/releases/yarn-4.17.1.cjs workspace @actual-app/core test src/server/accounts/gold.test.ts
+node .yarn/releases/yarn-4.17.1.cjs workspace @actual-app/core test:node src/server/accounts/gold.test.ts
 node .yarn/releases/yarn-4.17.1.cjs workspace @actual-app/web typecheck
 git add packages/loot-core/src/server/accounts
 git commit -m "feat: add gold account lot operations"
