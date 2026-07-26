@@ -226,26 +226,30 @@ export function CreateLocalAccountModal() {
                 </InlineField>
               )}
 
-              <InlineField label={t('Balance')} width="100%">
-                <Input
-                  name="balance"
-                  inputMode="decimal"
-                  value={balance}
-                  onChangeValue={setBalance}
-                  onUpdate={value => {
-                    const balance = value.trim();
-                    setBalance(balance);
-                    if (validateBalance(balance) && balanceError) {
-                      setBalanceError(false);
-                    }
-                  }}
-                  style={{ flex: 1 }}
-                />
-              </InlineField>
-              {balanceError && (
-                <FormError style={{ marginLeft: 75 }}>
-                  <Trans>Balance must be a number</Trans>
-                </FormError>
+              {subtype !== 'gold' && (
+                <>
+                  <InlineField label={t('Balance')} width="100%">
+                    <Input
+                      name="balance"
+                      inputMode="decimal"
+                      value={balance}
+                      onChangeValue={setBalance}
+                      onUpdate={value => {
+                        const balance = value.trim();
+                        setBalance(balance);
+                        if (validateBalance(balance) && balanceError) {
+                          setBalanceError(false);
+                        }
+                      }}
+                      style={{ flex: 1 }}
+                    />
+                  </InlineField>
+                  {balanceError && (
+                    <FormError style={{ marginLeft: 75 }}>
+                      <Trans>Balance must be a number</Trans>
+                    </FormError>
+                  )}
+                </>
               )}
 
               <ModalButtons>
