@@ -9,7 +9,7 @@ Replace the tall, scrollable month menu in the transaction list with a compact c
 - The trigger remains a bare button with the calendar icon and current selection (`T7/2026` or `Tất cả`).
 - Opening it displays a fixed-width popover containing:
   1. a `Tất cả` action;
-  2. a header with previous-year button, displayed year, and next-year button;
+  2. a horizontal header with previous-year button, displayed year, and next-year button;
   3. a 3-column by 4-row grid of month buttons.
 - Month labels are `Tháng 1` through `Tháng 12`.
 - The selected month has the existing selected/primary visual treatment.

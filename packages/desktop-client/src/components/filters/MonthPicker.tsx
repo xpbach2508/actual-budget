@@ -82,6 +82,7 @@ export function MonthPicker({
             style={{
               alignItems: 'center',
               display: 'flex',
+              flexDirection: 'row',
               justifyContent: 'space-between',
             }}
           >

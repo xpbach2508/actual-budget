@@ -28,6 +28,19 @@ describe('MonthPicker', () => {
     ).toHaveLength(12);
   });
 
+  it('lays out year navigation controls horizontally', async () => {
+    const user = userEvent.setup();
+    render(
+      <MonthPicker activeMonthValue={null} onApplyMonthFilter={vi.fn()} />,
+    );
+
+    await user.click(screen.getByRole('button', { name: /tất cả/i }));
+
+    expect(
+      screen.getByRole('button', { name: 'Năm trước' }).parentElement,
+    ).toHaveStyle({ flexDirection: 'row' });
+  });
+
   it('applies an enabled month and closes the popover', async () => {
     const user = userEvent.setup();
     const onApplyMonthFilter = vi.fn();
