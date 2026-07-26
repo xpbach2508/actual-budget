@@ -1,7 +1,10 @@
 import { useTranslation } from 'react-i18next';
 
 import { send } from '@actual-app/core/platform/client/connection';
-import type { SyncResponseWithErrors } from '@actual-app/core/server/accounts/app';
+import type {
+  AccountHandlers,
+  SyncResponseWithErrors,
+} from '@actual-app/core/server/accounts/app';
 import type {
   AccountEntity,
   CategoryEntity,
@@ -13,6 +16,7 @@ import type {
   TransactionEntity,
 } from '@actual-app/core/types/models';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { UseMutationResult } from '@tanstack/react-query';
 import type { QueryClient, QueryKey } from '@tanstack/react-query';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -92,6 +96,59 @@ export function useCreateAccountMutation() {
       );
     },
   });
+}
+
+type GoldPurchasePayload = {
+  accountId: AccountEntity['id'];
+  sourceAccountId: AccountEntity['id'];
+  date: string;
+  quantityChi: number;
+  totalCost: number;
+};
+
+type GoldManualAddPayload = Omit<GoldPurchasePayload, 'sourceAccountId'>;
+
+type GoldPricePayload = {
+  accountId: AccountEntity['id'];
+  pricePerChi: number;
+};
+
+function useGoldMutation<T>(
+  command: keyof Pick<
+    AccountHandlers,
+    'gold-purchase' | 'gold-manual-add' | 'gold-update-price'
+  >,
+): UseMutationResult<unknown, Error, T> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: T) => send(command, payload as never),
+    onSuccess: () => invalidateQueries(queryClient),
+  });
+}
+
+export function useGoldPurchaseMutation(): UseMutationResult<
+  unknown,
+  Error,
+  GoldPurchasePayload
+> {
+  return useGoldMutation<GoldPurchasePayload>('gold-purchase');
+}
+
+export function useGoldManualAddMutation(): UseMutationResult<
+  unknown,
+  Error,
+  GoldManualAddPayload
+> {
+  return useGoldMutation<GoldManualAddPayload>('gold-manual-add');
+}
+
+export function useGoldPriceMutation(): UseMutationResult<
+  unknown,
+  Error,
+  GoldPricePayload
+> {
+  return useGoldMutation<GoldPricePayload>('gold-update-price');
 }
 
 type CloseAccountPayload = {
