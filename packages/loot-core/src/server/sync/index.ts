@@ -82,21 +82,47 @@ function ensureGoldLotsTable(dataset: string) {
     return;
   }
 
-  // A worker may receive a new dataset before its pending migration runs,
-  // such as after an application upgrade while the worker stays alive.
+  // CRDT creates a row one column at a time. Therefore all fields apart
+  // from the id must accept a temporary null until their messages arrive.
   db.execQuery(`
     CREATE TABLE IF NOT EXISTS gold_lots (
       id TEXT PRIMARY KEY,
-      account_id TEXT NOT NULL,
-      date TEXT NOT NULL,
-      quantity_chi REAL NOT NULL,
-      cost_per_chi INTEGER NOT NULL,
+      account_id TEXT,
+      date TEXT,
+      quantity_chi REAL,
+      cost_per_chi INTEGER,
       transfer_id TEXT DEFAULT NULL,
       tombstone INTEGER NOT NULL DEFAULT 0
     );
-    CREATE INDEX IF NOT EXISTS gold_lots_account_id
-      ON gold_lots(account_id, tombstone);
   `);
+
+  const columns = db.runQuery<{ name: string; notnull: number }>(
+    'PRAGMA table_info(gold_lots)',
+    [],
+    true,
+  );
+  if (columns.some(column => column.name !== 'id' && column.notnull)) {
+    db.execQuery(`
+      CREATE TABLE gold_lots_sync_repair (
+        id TEXT PRIMARY KEY,
+        account_id TEXT,
+        date TEXT,
+        quantity_chi REAL,
+        cost_per_chi INTEGER,
+        transfer_id TEXT DEFAULT NULL,
+        tombstone INTEGER NOT NULL DEFAULT 0
+      );
+      INSERT INTO gold_lots_sync_repair
+        SELECT id, account_id, date, quantity_chi, cost_per_chi, transfer_id, tombstone
+        FROM gold_lots;
+      DROP TABLE gold_lots;
+      ALTER TABLE gold_lots_sync_repair RENAME TO gold_lots;
+    `);
+  }
+
+  db.execQuery(
+    'CREATE INDEX IF NOT EXISTS gold_lots_account_id ON gold_lots(account_id, tombstone)',
+  );
 }
 
 function apply(msg: Message, prev?: boolean) {
