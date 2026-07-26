@@ -118,7 +118,11 @@ curl http://localhost:5006/health
 
 Rollback starts the original compose from `~/projects/actual_budget`; neither path deletes `actual-data`.
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 3: Document package visibility**
+
+After the first successful workflow, open GitHub repository **Packages** → `actual-budget` → **Package settings** → **Change visibility** → **Public**. This one-time GitHub UI action allows anonymous pulls from the home server.
+
+- [ ] **Step 4: Commit**
 
 ```bash
 git add docs/deployment/home-server-ghcr.md
