@@ -583,7 +583,7 @@ async function insertGoldLot({
   validateGoldLot({ accountId, date, quantityChi, totalCost, transferId });
   const costPerChi = amountToInteger(totalCost / quantityChi);
 
-  return db.insertWithUUID('gold_lots', {
+  return db.insertWithSchema('gold_lots', {
     account_id: accountId,
     date,
     quantity_chi: quantityChi,
@@ -759,7 +759,7 @@ async function updateGoldPrice({
     throw new Error('Gold price must be a non-negative number');
   }
   const storedPrice = amountToInteger(pricePerChi);
-  await db.update('accounts', {
+  await db.updateWithSchema('accounts', {
     id: accountId,
     gold_current_price_per_chi: storedPrice,
   });
