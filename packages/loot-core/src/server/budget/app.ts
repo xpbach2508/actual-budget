@@ -11,6 +11,7 @@ import { undoable } from '#server/undo';
 import * as monthUtils from '#shared/months';
 import { q } from '#shared/query';
 import type { CategoryEntity, CategoryGroupEntity } from '#types/models';
+import { isCategoryIconKey } from '#shared/category-icons';
 
 import * as actions from './actions';
 import * as budget from './base';
@@ -330,6 +331,9 @@ async function createCategory({
 }
 
 async function updateCategory(category: CategoryEntity): Promise<void> {
+  if (category.icon != null && !isCategoryIconKey(category.icon)) {
+    throw APIError('Invalid category icon');
+  }
   try {
     await db.updateCategory(
       categoryModel.toDb({

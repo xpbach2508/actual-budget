@@ -49,6 +49,7 @@ export type DbBank = {
 export type DbCategory = {
   id: string;
   name: string;
+  icon?: string | null;
   is_income: 1 | 0;
   cat_group: DbCategoryGroup['id'];
   sort_order: number;
@@ -308,6 +309,7 @@ export type DbViewTransaction = DbViewTransactionInternalAlive;
 export type DbViewCategory = {
   id: DbCategory['id'];
   name: DbCategory['name'];
+  icon?: DbCategory['icon'];
   is_income: DbCategory['is_income'];
   hidden: DbCategory['hidden'];
   group: DbCategoryGroup['id'];
@@ -319,6 +321,7 @@ export type DbViewCategory = {
 export type DbViewCategoryWithGroupHidden = {
   id: DbCategory['id'];
   name: DbCategory['name'];
+  icon?: DbCategory['icon'];
   is_income: DbCategory['is_income'];
   hidden: DbCategory['hidden'];
   group: DbCategoryGroup['id'];

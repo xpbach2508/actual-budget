@@ -93,6 +93,7 @@ export const schema = {
   categories: {
     id: f('id'),
     name: f('string'),
+    icon: f('string'),
     is_income: f('boolean'),
     hidden: f('boolean'),
     group: f('id', { ref: 'category_groups' }),

@@ -44,7 +44,7 @@ export const accountModel = {
 
 export type APICategoryEntity = Pick<
   CategoryEntity,
-  'id' | 'name' | 'is_income' | 'hidden'
+  'id' | 'name' | 'icon' | 'is_income' | 'hidden'
 > & {
   group_id: string;
 };
@@ -56,6 +56,7 @@ export const categoryModel = {
     return {
       id: category.id,
       name: category.name,
+      icon: category.icon ?? null,
       is_income: category.is_income ? true : false,
       hidden: category.hidden ? true : false,
       group_id: category.group,

@@ -3,6 +3,7 @@ import type { CategoryGroupEntity } from './category-group';
 export type CategoryEntity = {
   id: string;
   name: string;
+  icon?: string | null;
   is_income?: boolean;
   group: CategoryGroupEntity['id'];
   goal_def?: string;
