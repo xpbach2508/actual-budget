@@ -1,5 +1,5 @@
 // @ts-strict-ignore
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import type { CSSProperties, Ref } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -14,6 +14,7 @@ import type {
 } from '@actual-app/core/types/models';
 
 import { CategoryIcon } from '#components/categories/CategoryIcon';
+import { CategoryIconPicker } from '#components/categories/CategoryIconPicker';
 import { InputCell } from '#components/table';
 import { useContextMenu } from '#hooks/useContextMenu';
 import { useGlobalPref } from '#hooks/useGlobalPref';
@@ -64,6 +65,7 @@ export function SidebarCategory({
   const categoryExpandedState = categoryExpandedStatePref ?? 0;
 
   const temporary = category.id === 'new';
+  const [iconPickerOpen, setIconPickerOpen] = useState(false);
   const triggerRef = useRef(null);
   const { handleContextMenu } = useContextMenu({
     triggerRef,
@@ -72,6 +74,11 @@ export function SidebarCategory({
         name: 'rename',
         text: t('Rename'),
         onClick: () => onEditName(category.id),
+      },
+      {
+        name: 'icon',
+        text: t('Change icon'),
+        onClick: () => setIconPickerOpen(true),
       },
       !categoryGroup?.hidden && {
         name: 'toggle-visibility',
@@ -99,7 +106,10 @@ export function SidebarCategory({
       }}
       ref={triggerRef}
     >
-      <CategoryIcon icon={category.icon} />
+      <View style={{ position: 'relative' }}>
+        <CategoryIcon icon={category.icon} />
+        {iconPickerOpen && <CategoryIconPicker value={category.icon} onSelect={icon => { onSave({ ...category, icon }); setIconPickerOpen(false); }} onClear={() => { onSave({ ...category, icon: null }); setIconPickerOpen(false); }} />}
+      </View>
       <TextOneLine data-testid="category-name" style={{ marginLeft: 5 }}>{category.name}</TextOneLine>
       <View style={{ flexShrink: 0, marginLeft: 5 }}>
         <Button
