@@ -17,6 +17,8 @@ import { Text } from '@actual-app/components/text';
 import { theme } from '@actual-app/components/theme';
 import { Tooltip } from '@actual-app/components/tooltip';
 import { View } from '@actual-app/components/view';
+import { calculateGoldSummary } from '@actual-app/core/shared/gold';
+import { q } from '@actual-app/core/shared/query';
 import type { AccountEntity } from '@actual-app/core/types/models';
 import { css, cx } from '@emotion/css';
 
@@ -31,10 +33,12 @@ import { useContextMenu } from '#hooks/useContextMenu';
 import { useDragRef } from '#hooks/useDragRef';
 import { useIsTestEnv } from '#hooks/useIsTestEnv';
 import { useNotes } from '#hooks/useNotes';
+import { useQuery } from '#hooks/useQuery';
 import { useSyncedPref } from '#hooks/useSyncedPref';
 import { openAccountCloseModal } from '#modals/modalsSlice';
 import { useDispatch, useSelector } from '#redux';
 import type { Binding, SheetFields } from '#spreadsheet';
+import { formatGoldQuantity } from '../transactions/goldQuantity';
 
 export const accountNameStyle: CSSProperties = {
   marginTop: -2,
@@ -141,7 +145,23 @@ export function Account<FieldName extends SheetFields<'account'>>({
   const reopenAccount = useReopenAccountMutation();
   const updateAccount = useUpdateAccountMutation();
 
-  const balanceCell = <CellValue binding={query} type="financial" />;
+  const isGoldAccount = account?.account_subtype === 'gold';
+  const { data: goldLots } = useQuery<{
+    quantity_chi: number;
+    cost_per_chi: number;
+  }>(
+    () =>
+      isGoldAccount && account
+        ? q('gold_lots').filter({ account_id: account.id }).select('*')
+        : null,
+    [account?.id, isGoldAccount],
+  );
+  const goldQuantity = calculateGoldSummary(goldLots ?? [], 0).quantityChi;
+  const balanceCell = isGoldAccount ? (
+    <Text>{formatGoldQuantity(goldQuantity)}</Text>
+  ) : (
+    <CellValue binding={query} type="financial" />
+  );
 
   const isContextMenuOpen = useSelector(state =>
     state.contextMenu.items.some(
