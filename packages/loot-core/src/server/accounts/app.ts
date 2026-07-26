@@ -18,6 +18,7 @@ import { del, get, post } from '#server/post';
 import { getPrefs } from '#server/prefs';
 import { getServer } from '#server/server-config';
 import { batchMessages } from '#server/sync';
+import { addTransfer } from '#server/transactions/transfer';
 import { undoable, withUndo } from '#server/undo';
 import { isNonProductionEnvironment } from '#shared/environment';
 import { dayFromDate } from '#shared/months';
@@ -62,6 +63,9 @@ export type AccountHandlers = {
   'akahu-accounts-link': typeof linkAkahuAccount;
   'enablebanking-accounts-link': typeof linkEnableBankingAccount;
   'account-create': typeof createAccount;
+  'gold-purchase': typeof purchaseGold;
+  'gold-manual-add': typeof addGoldManually;
+  'gold-update-price': typeof updateGoldPrice;
   'account-close': typeof closeAccount;
   'account-reopen': typeof reopenAccount;
   'account-move': typeof moveAccount;
@@ -129,6 +133,11 @@ async function getAccounts(): Promise<AccountEntity[]> {
         account_sync_source: dbAccount.account_sync_source ?? null,
         last_sync: dbAccount.last_sync ?? null,
         bank_sync_status: dbAccount.bank_sync_status ?? null,
+        account_subtype:
+          (dbAccount.account_subtype as AccountEntity['account_subtype']) ??
+          null,
+        gold_current_price_per_chi:
+          dbAccount.gold_current_price_per_chi ?? null,
       }) satisfies AccountEntity,
   );
 }
@@ -547,6 +556,54 @@ async function linkEnableBankingAccount({
   return 'ok';
 }
 
+type GoldLotInput = {
+  accountId: AccountEntity['id'];
+  date: string;
+  quantityChi: number;
+  totalCost: number;
+  transferId?: string | null;
+};
+
+function validateGoldLot({ quantityChi, totalCost }: GoldLotInput) {
+  if (!Number.isFinite(quantityChi) || quantityChi <= 0) {
+    throw new Error('Gold quantity must be greater than zero');
+  }
+  if (!Number.isFinite(totalCost) || totalCost < 0) {
+    throw new Error('Gold cost must be a non-negative number');
+  }
+}
+
+async function insertGoldLot({
+  accountId,
+  date,
+  quantityChi,
+  totalCost,
+  transferId = null,
+}: GoldLotInput) {
+  validateGoldLot({ accountId, date, quantityChi, totalCost, transferId });
+  const costPerChi = amountToInteger(totalCost / quantityChi);
+
+  return db.insertWithUUID('gold_lots', {
+    account_id: accountId,
+    date,
+    quantity_chi: quantityChi,
+    cost_per_chi: costPerChi,
+    transfer_id: transferId,
+    tombstone: 0,
+  });
+}
+
+async function assertGoldAccount(accountId: AccountEntity['id']) {
+  const account = await db.first<db.DbAccount>(
+    'SELECT * FROM accounts WHERE id = ? AND tombstone = 0',
+    [accountId],
+  );
+  if (!account || account.account_subtype !== 'gold') {
+    throw new Error('Account is not a Gold account');
+  }
+  return account;
+}
+
 async function createAccount({
   name,
   balance = 0,
@@ -587,6 +644,90 @@ async function createAccount({
   }
 
   return id;
+}
+
+async function purchaseGold({
+  accountId,
+  sourceAccountId,
+  date,
+  quantityChi,
+  totalCost,
+}: GoldLotInput & { sourceAccountId: AccountEntity['id'] }) {
+  await assertGoldAccount(accountId);
+  if (accountId === sourceAccountId) {
+    throw new Error('Gold purchase source account must be different');
+  }
+  validateGoldLot({ accountId, date, quantityChi, totalCost });
+
+  const payee = await db.first<Pick<db.DbPayee, 'id'>>(
+    'SELECT id FROM payees WHERE transfer_acct = ?',
+    [accountId],
+  );
+  if (!payee) {
+    throw new Error('Gold account transfer payee was not found');
+  }
+  const sourceTransactionId = await db.insertTransaction({
+    account: sourceAccountId,
+    amount: -amountToInteger(totalCost),
+    category: null,
+    payee: payee.id,
+    date,
+    cleared: true,
+  });
+  const sourceTransaction = await db.getTransaction(sourceTransactionId);
+  if (!sourceTransaction) {
+    throw new Error('Gold purchase transfer was not created');
+  }
+  const transfer = await addTransfer(sourceTransaction, accountId);
+  if (!transfer?.transfer_id) {
+    throw new Error('Gold purchase transfer was not linked');
+  }
+  await insertGoldLot({
+    accountId,
+    date,
+    quantityChi,
+    totalCost,
+    transferId: transfer.transfer_id,
+  });
+
+  return { transferId: transfer.transfer_id };
+}
+
+async function addGoldManually({
+  accountId,
+  date,
+  quantityChi,
+  totalCost,
+}: GoldLotInput) {
+  await assertGoldAccount(accountId);
+  validateGoldLot({ accountId, date, quantityChi, totalCost });
+  await db.insertTransaction({
+    account: accountId,
+    amount: amountToInteger(totalCost),
+    category: null,
+    date,
+    cleared: true,
+  });
+  await insertGoldLot({ accountId, date, quantityChi, totalCost });
+  return {};
+}
+
+async function updateGoldPrice({
+  accountId,
+  pricePerChi,
+}: {
+  accountId: AccountEntity['id'];
+  pricePerChi: number;
+}) {
+  await assertGoldAccount(accountId);
+  if (!Number.isFinite(pricePerChi) || pricePerChi < 0) {
+    throw new Error('Gold price must be a non-negative number');
+  }
+  await db.update('accounts', {
+    id: accountId,
+    gold_current_price_per_chi: amountToInteger(pricePerChi),
+  });
+  return {};
 }
 
 async function closeAccount({
