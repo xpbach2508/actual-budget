@@ -86,6 +86,7 @@ import type { AppDispatch } from '#redux/store';
 import { updateNewTransactions } from '#transactions/transactionsSlice';
 
 import { AccountEmptyMessage } from './AccountEmptyMessage';
+import { GoldAccountPanel } from './GoldAccountPanel';
 import { AccountHeader } from './Header';
 
 type ConditionEntity = Partial<RuleConditionEntity> | TransactionFilterEntity;
@@ -1822,6 +1823,9 @@ class AccountInternal extends PureComponent<
                 onMergeTransactions={this.onMergeTransactions}
               />
 
+              {account?.account_subtype === 'gold' && (
+                <GoldAccountPanel account={account} accounts={accounts} />
+              )}
               <View style={{ flex: 1 }}>
                 <TransactionList
                   headerContent={undefined}
