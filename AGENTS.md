@@ -38,6 +38,7 @@ yarn start:desktop
 
 ### Important Rules
 
+- **Workspace preference:** work directly on `master`; do not create a Git worktree unless the user explicitly asks for one.
 - **ALWAYS run yarn commands from the root directory** - never run them in child workspaces
 - Use `yarn workspace <workspace-name> run <command>` for workspace-specific tasks
 - Tests run once and exit by default (using `vitest --run`)
