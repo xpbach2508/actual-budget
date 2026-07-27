@@ -4,6 +4,7 @@ export type CategoryEntity = {
   id: string;
   name: string;
   icon?: string | null;
+  icon_color?: string | null;
   is_income?: boolean;
   group: CategoryGroupEntity['id'];
   goal_def?: string;

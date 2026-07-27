@@ -50,6 +50,7 @@ export type DbCategory = {
   id: string;
   name: string;
   icon?: string | null;
+  icon_color?: string | null;
   is_income: 1 | 0;
   cat_group: DbCategoryGroup['id'];
   sort_order: number;
