@@ -20,6 +20,7 @@ import type { TransactionEntity } from '@actual-app/core/types/models';
 import { v4 as uuidv4 } from 'uuid';
 
 import { Error as ErrorAlert } from '#components/alerts';
+import { CategoryAutocomplete } from '#components/autocomplete/CategoryAutocomplete';
 import { PayeeAutocomplete } from '#components/autocomplete/PayeeAutocomplete';
 import { Page } from '#components/Page';
 import { DateSelect } from '#components/select/DateSelect';
@@ -255,12 +256,13 @@ export function ReviewQueue() {
               inputProps={{ placeholder: t('Payee') }}
               containerProps={{ style: { flex: '1 1 120px' } }}
             />
-            <Select
-              options={categoryOptions}
+            <CategoryAutocomplete
+              categoryGroups={categoriesData?.grouped}
               value={quickAddCategory}
-              onChange={setQuickAddCategory}
-              defaultLabel={t('Category')}
-              style={{ flex: '1 1 120px' }}
+              onSelect={category => setQuickAddCategory(category ?? '')}
+              showBalances={false}
+              inputProps={{ placeholder: t('Category') }}
+              containerProps={{ style: { flex: '1 1 120px' } }}
             />
             <Button
               variant="primary"
@@ -368,15 +370,15 @@ export function ReviewQueue() {
                       gap: 8,
                     }}
                   >
-                    <Select
-                      options={categoryOptions}
+                    <CategoryAutocomplete
+                      categoryGroups={categoriesData?.grouped}
                       value={transaction.category ?? ''}
-                      onChange={category =>
-                        void updateRow(transaction.id, { category })
+                      onSelect={category =>
+                        void updateRow(transaction.id, { category: category ?? null })
                       }
-                      defaultLabel={categoryName}
-                      disabled={isPending}
-                      style={{ flex: '1 1 160px' }}
+                      showBalances={false}
+                      inputProps={{ placeholder: categoryName, disabled: isPending }}
+                      containerProps={{ style: { flex: '1 1 160px' } }}
                     />
                     <View
                       style={{

@@ -6,6 +6,7 @@ import { SvgArrowsSynchronize } from '@actual-app/components/icons/v2';
 import { theme } from '@actual-app/components/theme';
 import * as monthUtils from '@actual-app/core/shared/months';
 import type { TransactionEntity } from '@actual-app/core/types/models';
+import { resolveCategoryColorKey } from '@actual-app/core/shared/category-colors';
 import {
   format as formatDate,
   isValid as isDateValid,
@@ -13,6 +14,7 @@ import {
 } from 'date-fns';
 
 import { FinancialText } from '#components/FinancialText';
+import { CATEGORY_COLORS, CategoryIcon } from '#components/categories/CategoryIcon';
 import { Cell, Field, Row, SelectCell, Table } from '#components/table';
 import { DisplayId } from '#components/util/DisplayId';
 import { useAccount } from '#hooks/useAccount';
@@ -130,7 +132,7 @@ function TransactionRow({
           case 'category':
             return (
               <Field key={i} width="flex" title={category?.name}>
-                {category?.name || ''}
+                {category && <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}><CategoryIcon icon={category.icon} color={category.icon_color} /><span style={{ color: CATEGORY_COLORS[resolveCategoryColorKey(category.icon_color)].icon }}>{category.name}</span></div>}
               </Field>
             );
           case 'account':
