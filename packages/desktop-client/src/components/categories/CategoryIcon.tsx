@@ -16,7 +16,7 @@ export function CategoryIcon({ icon, size = 16 }: { icon?: string | null; size?:
     case 'shopping_bag': case 'checkroom': case 'redeem': return <SvgLocationShopping {...props} />;
     case 'home': case 'cleaning_services': return <SvgHome {...props} />;
     case 'directions_car': case 'local_gas_station': return icon === 'local_gas_station' ? <SvgLocationGasStation {...props} /> : <SvgTravelCar {...props} />;
-    case 'medical_services': case 'local_hospital': case 'volunteer_activism': return <SvgHeart {...props} />;
+    case 'medical_services': case 'local_hospital': case 'volunteer_activism': case 'heart': return <SvgHeart {...props} />;
     case 'school': case 'child_care': return <SvgEducation {...props} />;
     case 'pets': case 'elderly': return <SvgHeart {...props} />;
     case 'flight': case 'public': return <SvgAirplane {...props} />;

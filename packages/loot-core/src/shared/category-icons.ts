@@ -7,7 +7,7 @@ export const CATEGORY_ICON_KEYS = [
   'shopping_bag', 'checkroom', 'phone_iphone', 'wifi', 'electric_bolt',
   'water_drop', 'fitness_center', 'sports_soccer', 'movie', 'music_note',
   'celebration', 'redeem', 'child_care', 'elderly', 'volunteer_activism',
-  'card_giftcard', 'work', 'account_balance', 'receipt_long', 'security',
+  'card_giftcard', 'heart', 'work', 'account_balance', 'receipt_long', 'security',
   'build', 'cleaning_services', 'hotel', 'public', 'local_hospital',
 ] as const;
 
