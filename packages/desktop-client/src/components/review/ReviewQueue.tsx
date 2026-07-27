@@ -21,6 +21,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { Error as ErrorAlert } from '#components/alerts';
 import { CategoryAutocomplete } from '#components/autocomplete/CategoryAutocomplete';
+import { CATEGORY_COLORS, CategoryIcon } from '#components/categories/CategoryIcon';
+import { resolveCategoryColorKey } from '@actual-app/core/shared/category-colors';
 import { PayeeAutocomplete } from '#components/autocomplete/PayeeAutocomplete';
 import { Page } from '#components/Page';
 import { DateSelect } from '#components/select/DateSelect';
@@ -296,11 +298,11 @@ export function ReviewQueue() {
               const payeeName = transaction.payee
                 ? payeesById?.[transaction.payee]?.name
                 : t('No payee');
-              const categoryName = transaction.category
-                ? categories.find(
-                    category => category.id === transaction.category,
-                  )?.name
-                : t('Uncategorized');
+              const selectedCategory = transaction.category
+                ? categories.find(category => category.id === transaction.category)
+                : undefined;
+              const categoryName = selectedCategory?.name ?? t('Uncategorized');
+              const categoryTextColor = CATEGORY_COLORS[resolveCategoryColorKey(selectedCategory?.icon_color)].icon;
 
               return (
                 <View
@@ -370,6 +372,10 @@ export function ReviewQueue() {
                       gap: 8,
                     }}
                   >
+                    <View style={{ alignItems: 'center', flexDirection: 'row', gap: 6 }}>
+                      <CategoryIcon icon={selectedCategory?.icon} color={selectedCategory?.icon_color} />
+                      <span style={{ color: categoryTextColor, whiteSpace: 'nowrap' }}>{categoryName}</span>
+                    </View>
                     <CategoryAutocomplete
                       categoryGroups={categoriesData?.grouped}
                       value={transaction.category ?? ''}
