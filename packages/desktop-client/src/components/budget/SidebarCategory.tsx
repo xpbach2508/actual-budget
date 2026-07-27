@@ -66,6 +66,7 @@ export function SidebarCategory({
 
   const temporary = category.id === 'new';
   const [iconPickerOpen, setIconPickerOpen] = useState(false);
+  const [optimisticIcon, setOptimisticIcon] = useState(category.icon);
   const triggerRef = useRef(null);
   const { handleContextMenu } = useContextMenu({
     triggerRef,
@@ -107,8 +108,8 @@ export function SidebarCategory({
       ref={triggerRef}
     >
       <View style={{ position: 'relative' }}>
-        <CategoryIcon icon={category.icon} />
-        {iconPickerOpen && <CategoryIconPicker value={category.icon} onSelect={icon => { onSave({ ...category, icon }); setIconPickerOpen(false); }} onClear={() => { onSave({ ...category, icon: null }); setIconPickerOpen(false); }} />}
+        <CategoryIcon icon={optimisticIcon} />
+        {iconPickerOpen && <CategoryIconPicker value={optimisticIcon} onSelect={icon => { setOptimisticIcon(icon); onSave({ ...category, icon }); setIconPickerOpen(false); }} onClear={() => { setOptimisticIcon(null); onSave({ ...category, icon: null }); setIconPickerOpen(false); }} />}
       </View>
       <TextOneLine data-testid="category-name" style={{ marginLeft: 5 }}>{category.name}</TextOneLine>
       <View style={{ flexShrink: 0, marginLeft: 5 }}>
