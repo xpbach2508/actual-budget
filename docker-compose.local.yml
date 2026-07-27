@@ -24,7 +24,7 @@ services:
       - actual-node-modules:/app/node_modules
       - actual-data:/data
     command: >
-      bash -lc "corepack enable && yarn install --immutable && yarn start:browser"
+      bash -lc "corepack enable && yarn install --immutable && yarn start:server-dev"
     restart: unless-stopped
 
 volumes:
