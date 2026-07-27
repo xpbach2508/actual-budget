@@ -47,5 +47,5 @@ export function CategoryIcon({ icon, color, size = 16 }: { icon?: string | null;
     case 'hotel': glyph = <SvgLocationHotel {...props} />; break;
     default: glyph = <SvgChart {...props} />;
   }
-  return <span aria-label={`Category color: ${resolveCategoryColorKey(color)}`} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: size + 8, height: size + 8, borderRadius: 5, backgroundColor: palette.background }}>{glyph}</span>;
+  return <span aria-label={`Category color: ${resolveCategoryColorKey(color)}`} style={{ display: 'inline-flex', flexShrink: 0, alignItems: 'center', justifyContent: 'center', width: size + 8, height: size + 8, borderRadius: 5, backgroundColor: palette.background, lineHeight: 0 }}>{glyph}</span>;
 }

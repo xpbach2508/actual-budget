@@ -112,7 +112,7 @@ export function SidebarCategory({
         <CategoryIcon icon={optimisticIcon} color={category.icon_color} />
         {iconPickerOpen && <CategoryIconPicker value={optimisticIcon} color={category.icon_color} onSave={(icon, color) => { setOptimisticIcon(icon); onSave({ ...category, icon, icon_color: color }); }} onClose={() => setIconPickerOpen(false)} />}
       </View>
-      <TextOneLine data-testid="category-name" style={{ marginLeft: 5, color: `${CATEGORY_COLORS[resolveCategoryColorKey(category.icon_color)].icon} !important` }}>{category.name}</TextOneLine>
+      <TextOneLine data-testid="category-name" style={{ marginLeft: 5 }}><span style={{ color: CATEGORY_COLORS[resolveCategoryColorKey(category.icon_color)].icon }}>{category.name}</span></TextOneLine>
       <View style={{ flexShrink: 0, marginLeft: 5 }}>
         <Button
           variant="bare"
