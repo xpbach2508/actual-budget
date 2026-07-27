@@ -3,7 +3,7 @@
 #
 #   docker compose -f docker-compose.local.yml up
 #
-# Open http://localhost:5173. Source edits hot-reload; do not use --build.
+# Open http://localhost:3001. Source edits hot-reload; do not use --build.
 # Budget/sync state remains in the existing actual-data named volume.
 ###################################################
 
@@ -12,7 +12,7 @@ services:
     image: node:22-bookworm
     working_dir: /app
     ports:
-      - '5173:5173'
+      - '3001:3001'
       - '5006:5006'
     environment:
       ACTUAL_DATA_DIR: /data
