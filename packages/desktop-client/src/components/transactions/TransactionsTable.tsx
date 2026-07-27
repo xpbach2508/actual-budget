@@ -85,6 +85,8 @@ import { format as formatDate, parseISO } from 'date-fns';
 import { getAccountsById } from '#accounts/accountsSlice';
 import { AccountAutocomplete } from '#components/autocomplete/AccountAutocomplete';
 import { CategoryAutocomplete } from '#components/autocomplete/CategoryAutocomplete';
+import { CATEGORY_COLORS, CategoryIcon } from '#components/categories/CategoryIcon';
+import { resolveCategoryColorKey } from '@actual-app/core/shared/category-colors';
 import { PayeeAutocomplete } from '#components/autocomplete/PayeeAutocomplete';
 import { TagAutocomplete } from '#components/autocomplete/TagAutocomplete';
 import { getStatusProps } from '#components/schedules/StatusBadge';
@@ -1804,13 +1806,21 @@ const Transaction = memo(function Transaction({
             width="flex"
             textAlign="flex"
             value={categoryId}
-            formatter={value =>
-              value
-                ? (getCategoriesById(categoryGroups)[value]?.name ?? '')
-                : transaction.id
-                  ? t('Categorize')
-                  : ''
-            }
+            formatter={value => {
+              const category = value
+                ? getCategoriesById(categoryGroups)[value]
+                : undefined;
+              if (!category) {
+                return transaction.id ? t('Categorize') : '';
+              }
+              const color = CATEGORY_COLORS[resolveCategoryColorKey(category.icon_color)].icon;
+              return (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                  <CategoryIcon icon={category.icon} color={category.icon_color} />
+                  <span style={{ color }}>{category.name}</span>
+                </View>
+              );
+            }}
             exposed={focusedField === 'category'}
             onExpose={name => !isPreview && onEdit(id, name)}
             valueStyle={
