@@ -109,7 +109,7 @@ export function SidebarCategory({
     >
       <View style={{ position: 'relative' }}>
         <CategoryIcon icon={optimisticIcon} color={category.icon_color} />
-        {iconPickerOpen && <CategoryIconPicker value={optimisticIcon} color={category.icon_color} onSelect={icon => { setOptimisticIcon(icon); onSave({ ...category, icon }); }} onColorSelect={color => onSave({ ...category, icon_color: color })} onClear={() => { setOptimisticIcon(null); onSave({ ...category, icon: null, icon_color: null }); setIconPickerOpen(false); }} />}
+        {iconPickerOpen && <CategoryIconPicker value={optimisticIcon} color={category.icon_color} onSave={(icon, color) => { setOptimisticIcon(icon); onSave({ ...category, icon, icon_color: color }); }} onClose={() => setIconPickerOpen(false)} />}
       </View>
       <TextOneLine data-testid="category-name" style={{ marginLeft: 5 }}>{category.name}</TextOneLine>
       <View style={{ flexShrink: 0, marginLeft: 5 }}>
