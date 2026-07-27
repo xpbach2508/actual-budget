@@ -1,7 +1,7 @@
 export const DEFAULT_CATEGORY_ICON_KEY = 'category' as const;
 
 export const CATEGORY_ICON_KEYS = [
-  'category', 'restaurant', 'shopping_cart', 'home', 'directions_car',
+  'category', 'people', 'shopping_basket', 'coffee', 'cosmetics', 'clothing', 'repair', 'income', 'profit', 'restaurant', 'shopping_cart', 'home', 'directions_car',
   'local_gas_station', 'medical_services', 'school', 'pets', 'flight',
   'subscriptions', 'savings', 'payments', 'local_cafe', 'local_grocery_store',
   'shopping_bag', 'checkroom', 'phone_iphone', 'wifi', 'electric_bolt',
