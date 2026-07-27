@@ -1,32 +1,32 @@
 ###################################################
-# Local browser development with Docker HMR.
+# Runs a production-like Actual instance built from
+# the LOCAL working tree, so local code changes are
+# what actually gets served.
 #
-#   docker compose -f docker-compose.local.yml up
+#   docker compose -f docker-compose.local.yml up --build
 #
-# Open http://localhost:3001. Source edits hot-reload; do not use --build.
-# Budget/sync state remains in the existing actual-data named volume.
+# Then open http://localhost:5006
+#
+# The sync-server serves both the API and the built
+# web client, so this is the only service needed.
+# Rebuild (`--build`) after changing any source.
 ###################################################
 
 services:
   actual:
-    image: node:22-bookworm
-    working_dir: /app
+    build:
+      context: .
+      dockerfile: sync-server.Dockerfile
+    image: actual-local:dev
     ports:
-      - '3001:3001'
       - '5006:5006'
     environment:
-      ACTUAL_DATA_DIR: /data
-      TZ: Asia/Ho_Chi_Minh
-      CHOKIDAR_USEPOLLING: 'true'
-      WATCHPACK_POLLING: 'true'
+      - ACTUAL_DATA_DIR=/data
+      - TZ=Asia/Ho_Chi_Minh
     volumes:
-      - .:/app
-      - actual-node-modules:/app/node_modules
+      # Named volume keeps your budget + sync state across rebuilds.
       - actual-data:/data
-    command: >
-      bash -lc "corepack enable && yarn install --immutable && yarn start:server-dev"
     restart: unless-stopped
 
 volumes:
   actual-data:
-  actual-node-modules:
