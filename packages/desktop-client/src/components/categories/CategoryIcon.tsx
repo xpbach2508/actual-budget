@@ -20,7 +20,7 @@ export const CATEGORY_COLORS: Record<CategoryColorKey, { icon: string; backgroun
 export function CategoryIcon({ icon, color, size = 16 }: { icon?: string | null; color?: string | null; size?: number }) {
   const key = resolveCategoryIconKey(icon);
   const palette = CATEGORY_COLORS[resolveCategoryColorKey(color)];
-  const props = { width: size, height: size, 'aria-label': `Category icon: ${key}`, style: { color: palette.icon } };
+  const props = { width: size, height: size, 'aria-label': `Category icon: ${key}`, style: { color: palette.icon, fill: palette.icon } };
   let glyph: React.ReactNode;
   switch (key) {
     case 'restaurant': case 'local_grocery_store': glyph = <SvgLocationFood {...props} />; break;

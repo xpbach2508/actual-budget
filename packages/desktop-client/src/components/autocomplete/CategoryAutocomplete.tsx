@@ -440,7 +440,7 @@ function CategoryItem({
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
           {item.id !== 'to-budget' && item.id !== 'split' && <CategoryIcon icon={item.icon} color={item.icon_color} />}
-          <TextOneLine style={{ color: CATEGORY_COLORS[resolveCategoryColorKey(item.icon_color)].icon }}>
+          <TextOneLine style={{ color: `${CATEGORY_COLORS[resolveCategoryColorKey(item.icon_color)].icon} !important` }}>
           {item.name}
           {item.hidden || item.group?.hidden ? ' ' + t('(hidden)') : ''}
           </TextOneLine>
