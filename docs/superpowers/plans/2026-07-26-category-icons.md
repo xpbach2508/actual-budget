@@ -168,12 +168,14 @@ yarn workspace @actual-app/desktop-client test CategoryAutocomplete Transactions
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/desktop-client/src/components/autocomplete packages/desktop-client/src/components/transactions
 git commit -m "feat: show icons in category selection"
 ```
+
+Additional completed UI work: category colors are synced and rendered as pastel icon backgrounds plus matching text colors in Budget, CategoryAutocomplete, Review Queue transaction cards, and account transaction rows. Review uses CategoryAutocomplete rather than a native Select so category suggestions retain icon/color rendering. Commits include `cabbab8b8`, `f886db804`, `becc7a100`, and `c60cf49be`.
 
 ### Task 4: Extend widget summary with the persisted category icon
 
@@ -216,6 +218,8 @@ git commit -m "feat(widget): include category icon keys"
 ```
 
 ### Task 5: Render widget category icon vectors
+
+- [x] Android category icons, palette tinting, MIUI-safe progress bars, and trend/category bars are implemented and build-tested. Deployment/install remain intentionally separate.
 
 **Repository:** `personal_finance`
 
