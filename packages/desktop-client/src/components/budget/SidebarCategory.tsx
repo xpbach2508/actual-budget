@@ -13,7 +13,8 @@ import type {
   CategoryGroupEntity,
 } from '@actual-app/core/types/models';
 
-import { CategoryIcon } from '#components/categories/CategoryIcon';
+import { CATEGORY_COLORS, CategoryIcon } from '#components/categories/CategoryIcon';
+import { resolveCategoryColorKey } from '@actual-app/core/shared/category-colors';
 import { CategoryIconPicker } from '#components/categories/CategoryIconPicker';
 import { InputCell } from '#components/table';
 import { useContextMenu } from '#hooks/useContextMenu';
@@ -111,7 +112,7 @@ export function SidebarCategory({
         <CategoryIcon icon={optimisticIcon} color={category.icon_color} />
         {iconPickerOpen && <CategoryIconPicker value={optimisticIcon} color={category.icon_color} onSave={(icon, color) => { setOptimisticIcon(icon); onSave({ ...category, icon, icon_color: color }); }} onClose={() => setIconPickerOpen(false)} />}
       </View>
-      <TextOneLine data-testid="category-name" style={{ marginLeft: 5 }}>{category.name}</TextOneLine>
+      <TextOneLine data-testid="category-name" style={{ marginLeft: 5, color: CATEGORY_COLORS[resolveCategoryColorKey(category.icon_color)].icon }}>{category.name}</TextOneLine>
       <View style={{ flexShrink: 0, marginLeft: 5 }}>
         <Button
           variant="bare"

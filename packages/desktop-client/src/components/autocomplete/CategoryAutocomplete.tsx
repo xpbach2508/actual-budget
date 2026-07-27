@@ -16,7 +16,8 @@ import { styles } from '@actual-app/components/styles';
 import { Text } from '@actual-app/components/text';
 import { TextOneLine } from '@actual-app/components/text-one-line';
 
-import { CategoryIcon } from '#components/categories/CategoryIcon';
+import { CATEGORY_COLORS, CategoryIcon } from '#components/categories/CategoryIcon';
+import { resolveCategoryColorKey } from '@actual-app/core/shared/category-colors';
 import { theme } from '@actual-app/components/theme';
 import { View } from '@actual-app/components/view';
 import { integerToCurrency } from '@actual-app/core/shared/util';
@@ -439,7 +440,7 @@ function CategoryItem({
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
           {item.id !== 'to-budget' && item.id !== 'split' && <CategoryIcon icon={item.icon} color={item.icon_color} />}
-          <TextOneLine>
+          <TextOneLine style={{ color: CATEGORY_COLORS[resolveCategoryColorKey(item.icon_color)].icon }}>
           {item.name}
           {item.hidden || item.group?.hidden ? ' ' + t('(hidden)') : ''}
           </TextOneLine>

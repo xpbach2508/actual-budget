@@ -10,7 +10,7 @@ import {
 import { resolveCategoryIconKey } from '@actual-app/core/shared/category-icons';
 import { resolveCategoryColorKey, type CategoryColorKey } from '@actual-app/core/shared/category-colors';
 
-const COLORS: Record<CategoryColorKey, { icon: string; background: string }> = {
+export const CATEGORY_COLORS: Record<CategoryColorKey, { icon: string; background: string }> = {
   teal: { icon: '#087C7D', background: '#E1F4F1' }, purple: { icon: '#7654D6', background: '#F0EAFE' },
   orange: { icon: '#E87032', background: '#FFF0E8' }, yellow: { icon: '#D39B12', background: '#FFF8DD' },
   blue: { icon: '#3C8FD8', background: '#E8F3FF' }, pink: { icon: '#D94891', background: '#FDEBF5' },
@@ -19,7 +19,7 @@ const COLORS: Record<CategoryColorKey, { icon: string; background: string }> = {
 
 export function CategoryIcon({ icon, color, size = 16 }: { icon?: string | null; color?: string | null; size?: number }) {
   const key = resolveCategoryIconKey(icon);
-  const palette = COLORS[resolveCategoryColorKey(color)];
+  const palette = CATEGORY_COLORS[resolveCategoryColorKey(color)];
   const props = { width: size, height: size, 'aria-label': `Category icon: ${key}`, style: { color: palette.icon } };
   let glyph: React.ReactNode;
   switch (key) {
