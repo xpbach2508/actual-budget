@@ -277,6 +277,13 @@ function AdditionalAccountMenu({
                     ? t('Hide reconciled transactions')
                     : t('Show reconciled transactions'),
               },
+              {
+                name: 'toggle-exclude-from-totals',
+                text:
+                  account.exclude_from_totals === true
+                    ? t('Include in summary totals')
+                    : t('Exclude from summary totals'),
+              },
               account.closed
                 ? {
                     name: 'reopen',
@@ -305,6 +312,12 @@ function AdditionalAccountMenu({
                   break;
                 case 'toggle-reconciled':
                   onToggleReconciled?.();
+                  break;
+                case 'toggle-exclude-from-totals':
+                  onSave?.({
+                    ...account,
+                    exclude_from_totals: !(account.exclude_from_totals === true),
+                  });
                   break;
                 default:
                   throw new Error(`Unrecognized menu option: ${String(name)}`);
