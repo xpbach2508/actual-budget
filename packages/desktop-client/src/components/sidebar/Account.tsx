@@ -157,10 +157,21 @@ export function Account<FieldName extends SheetFields<'account'>>({
     [account?.id, isGoldAccount],
   );
   const goldQuantity = calculateGoldSummary(goldLots ?? [], 0).quantityChi;
-  const balanceCell = isGoldAccount ? (
-    <Text>{formatGoldQuantity(goldQuantity)}</Text>
-  ) : (
-    <CellValue binding={query} type="financial" />
+  const isExcluded = account?.exclude_from_totals === true;
+  const balanceCell = (
+    <View
+      style={{
+        opacity: isExcluded ? 0.6 : 1,
+        fontStyle: isExcluded ? 'italic' : 'normal',
+      }}
+      title={isExcluded ? t('Excluded from summary totals') : undefined}
+    >
+      {isGoldAccount ? (
+        <Text>{formatGoldQuantity(goldQuantity)}</Text>
+      ) : (
+        <CellValue binding={query} type="financial" />
+      )}
+    </View>
   );
 
   const isContextMenuOpen = useSelector(state =>
