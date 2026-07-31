@@ -24,6 +24,7 @@ export type AccountEntity = {
   bank_sync_status: BankSyncStatus | null;
   account_subtype?: 'savings' | 'gold' | 'family' | 'investment' | null;
   gold_current_price_per_chi?: number | null;
+  exclude_from_totals?: 0 | 1 | boolean | null;
 };
 
 export type AccountSyncSource = BankSyncProviders;

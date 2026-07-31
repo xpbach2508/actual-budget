@@ -80,6 +80,7 @@ export const schema = {
     bank_sync_status: f('string'),
     account_subtype: f('string'),
     gold_current_price_per_chi: f('integer'),
+    exclude_from_totals: f('boolean'),
   },
   gold_lots: {
     id: f('id'),
