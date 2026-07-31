@@ -62,6 +62,23 @@ async function patchBadMigrations(db: Database) {
       newFiltersMigration,
     ]);
   }
+
+  try {
+    const columns = sqlite.runQuery<{ name: string }>(
+      db,
+      'PRAGMA table_info(accounts)',
+      [],
+      true,
+    );
+    if (!columns.some(c => c.name === 'exclude_from_totals')) {
+      sqlite.runQuery(
+        db,
+        'ALTER TABLE accounts ADD COLUMN exclude_from_totals INTEGER DEFAULT 0',
+      );
+    }
+  } catch (err) {
+    logger.warn('Failed to ensure exclude_from_totals column on accounts', err);
+  }
 }
 
 export async function getAppliedMigrations(db: Database): Promise<number[]> {
