@@ -99,12 +99,13 @@ async function updateAccount({
   id,
   name,
   last_reconciled,
-}: Pick<AccountEntity, 'id' | 'name'> &
-  Partial<Pick<AccountEntity, 'last_reconciled'>>) {
+  exclude_from_totals,
+}: Partial<AccountEntity> & Pick<AccountEntity, 'id'>) {
   await db.update('accounts', {
     id,
-    name,
-    ...(last_reconciled && { last_reconciled }),
+    ...(name !== undefined && { name }),
+    ...(last_reconciled !== undefined && { last_reconciled }),
+    ...(exclude_from_totals !== undefined && { exclude_from_totals }),
   });
   return {};
 }
