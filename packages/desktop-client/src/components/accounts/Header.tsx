@@ -774,7 +774,8 @@ type AccountMenuProps = {
       | 'remove-sorting'
       | 'toggle-cleared'
       | 'toggle-reconciled'
-      | 'toggle-net-worth-chart',
+      | 'toggle-net-worth-chart'
+      | 'toggle-exclude-from-totals',
   ) => void;
 };
 
@@ -835,6 +836,17 @@ function AccountMenu({
             ? t('Hide reconciled transactions')
             : t('Show reconciled transactions'),
         },
+        ...(account
+          ? [
+              {
+                name: 'toggle-exclude-from-totals',
+                text:
+                  account.exclude_from_totals === true
+                    ? t('Include in summary totals')
+                    : t('Exclude from summary totals'),
+              } as const,
+            ]
+          : []),
         { name: 'export', text: t('Export') },
         ...(account && !account.closed
           ? canSync

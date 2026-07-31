@@ -811,7 +811,8 @@ class AccountInternal extends PureComponent<
       | 'remove-sorting'
       | 'toggle-cleared'
       | 'toggle-reconciled'
-      | 'toggle-net-worth-chart',
+      | 'toggle-net-worth-chart'
+      | 'toggle-exclude-from-totals',
   ) => {
     const accountId = this.props.accountId!;
     const account = this.props.accounts.find(
@@ -819,6 +820,12 @@ class AccountInternal extends PureComponent<
     )!;
 
     switch (item) {
+      case 'toggle-exclude-from-totals':
+        this.props.updateAccount({
+          ...account,
+          exclude_from_totals: !(account.exclude_from_totals === true),
+        });
+        break;
       case 'link':
         this.props.dispatch(
           pushModal({
