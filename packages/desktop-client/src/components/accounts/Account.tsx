@@ -821,7 +821,7 @@ class AccountInternal extends PureComponent<
 
     switch (item) {
       case 'toggle-exclude-from-totals':
-        this.props.updateAccount({
+        this.props.onUpdateAccount({
           ...account,
           exclude_from_totals: !(account.exclude_from_totals === true),
         });
