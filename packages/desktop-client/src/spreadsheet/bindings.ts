@@ -52,7 +52,10 @@ export function accountBalanceUncleared(accountId: AccountEntity['id']) {
 export function allAccountBalance() {
   return {
     query: q('transactions')
-      .filter({ 'account.closed': false })
+      .filter({
+        'account.closed': false,
+        'account.exclude_from_totals': false,
+      })
       .calculate({ $sum: '$amount' }),
     name: 'accounts-balance',
   } satisfies Binding<'account', 'accounts-balance'>;
@@ -62,7 +65,11 @@ export function onBudgetAccountBalance() {
   return {
     name: `onbudget-accounts-balance`,
     query: q('transactions')
-      .filter({ 'account.offbudget': false, 'account.closed': false })
+      .filter({
+        'account.offbudget': false,
+        'account.closed': false,
+        'account.exclude_from_totals': false,
+      })
       .calculate({ $sum: '$amount' }),
   } satisfies Binding<'account', 'onbudget-accounts-balance'>;
 }
@@ -71,7 +78,11 @@ export function offBudgetAccountBalance() {
   return {
     name: `offbudget-accounts-balance`,
     query: q('transactions')
-      .filter({ 'account.offbudget': true, 'account.closed': false })
+      .filter({
+        'account.offbudget': true,
+        'account.closed': false,
+        'account.exclude_from_totals': false,
+      })
       .calculate({ $sum: '$amount' }),
   } satisfies Binding<'account', 'offbudget-accounts-balance'>;
 }
