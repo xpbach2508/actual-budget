@@ -155,6 +155,14 @@ function apply(msg: Message, prev?: boolean) {
 
       db.runQuery(db.cache(query.sql), query.params);
     } catch (error) {
+      console.error('[SyncError: invalid-schema DETAILS]:', {
+        errorMessage: error?.message,
+        errorStack: error?.stack,
+        query,
+        dataset,
+        column,
+        value,
+      });
       throw new SyncError('invalid-schema', {
         error: { message: error.message, stack: error.stack },
         query,

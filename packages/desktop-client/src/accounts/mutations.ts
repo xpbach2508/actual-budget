@@ -255,7 +255,12 @@ export function useUpdateAccountMutation() {
     },
     onSuccess: () => invalidateQueries(queryClient),
     onError: error => {
-      console.error('Error updating account:', error);
+      console.error('Error updating account:', error, {
+        message: error?.message,
+        code: (error as any)?.code,
+        meta: (error as any)?.meta,
+        cause: (error as any)?.cause,
+      });
       dispatchErrorNotification(
         dispatch,
         t('There was an error updating the account. Please try again.'),
