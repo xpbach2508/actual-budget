@@ -38,6 +38,9 @@ export const accountModel = {
     if ('closed' in account) {
       result.closed = account.closed ? 1 : 0;
     }
+    if ('exclude_from_totals' in account) {
+      result.exclude_from_totals = account.exclude_from_totals ? 1 : 0;
+    }
     return result;
   },
 };

@@ -823,7 +823,7 @@ class AccountInternal extends PureComponent<
       case 'toggle-exclude-from-totals':
         this.props.onUpdateAccount({
           ...account,
-          exclude_from_totals: !(account.exclude_from_totals === true),
+          exclude_from_totals: account.exclude_from_totals ? 0 : 1,
         });
         break;
       case 'link':

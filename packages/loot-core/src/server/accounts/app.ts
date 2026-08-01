@@ -105,7 +105,9 @@ async function updateAccount({
     id,
     ...(name !== undefined && { name }),
     ...(last_reconciled !== undefined && { last_reconciled }),
-    ...(exclude_from_totals !== undefined && { exclude_from_totals }),
+    ...(exclude_from_totals !== undefined && {
+      exclude_from_totals: exclude_from_totals ? 1 : 0,
+    }),
   });
   return {};
 }

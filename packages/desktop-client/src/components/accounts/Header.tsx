@@ -841,7 +841,7 @@ function AccountMenu({
               {
                 name: 'toggle-exclude-from-totals',
                 text:
-                  account.exclude_from_totals === true
+                  Boolean(account.exclude_from_totals)
                     ? t('Include in summary totals')
                     : t('Exclude from summary totals'),
               } as const,

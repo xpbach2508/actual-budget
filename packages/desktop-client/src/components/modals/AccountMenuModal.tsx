@@ -280,7 +280,7 @@ function AdditionalAccountMenu({
               {
                 name: 'toggle-exclude-from-totals',
                 text:
-                  account.exclude_from_totals === true
+                  Boolean(account.exclude_from_totals)
                     ? t('Include in summary totals')
                     : t('Exclude from summary totals'),
               },
@@ -316,7 +316,7 @@ function AdditionalAccountMenu({
                 case 'toggle-exclude-from-totals':
                   onSave?.({
                     ...account,
-                    exclude_from_totals: !(account.exclude_from_totals === true),
+                    exclude_from_totals: account.exclude_from_totals ? 0 : 1,
                   });
                   break;
                 default:
