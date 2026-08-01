@@ -14,6 +14,7 @@ import * as models from './models';
 export type APIAccountEntity = Pick<AccountEntity, 'id' | 'name'> & {
   offbudget?: boolean;
   closed?: boolean;
+  exclude_from_totals?: boolean;
   balance_current?: number | null;
 };
 

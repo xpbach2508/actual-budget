@@ -314,6 +314,23 @@ export function AccountHeader({
                 saveNameError={saveNameError}
                 onSaveName={onSaveName}
               />
+              {Boolean(account?.exclude_from_totals) && (
+                <View
+                  style={{
+                    padding: '2px 8px',
+                    borderRadius: 4,
+                    backgroundColor: theme.pillBackground,
+                    color: theme.pillText,
+                    fontSize: 12,
+                    fontStyle: 'italic',
+                    alignSelf: 'center',
+                    marginLeft: 6,
+                  }}
+                  title={t('Excluded from summary totals')}
+                >
+                  <Trans>Excluded from totals</Trans>
+                </View>
+              )}
             </View>
 
             <Balances

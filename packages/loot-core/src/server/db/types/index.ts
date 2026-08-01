@@ -22,6 +22,7 @@ export type DbAccount = {
   subtype?: string | null;
   account_subtype?: string | null;
   gold_current_price_per_chi?: number | null;
+  exclude_from_totals?: 1 | 0 | null;
   bank?: string | null;
   account_sync_source?: 'simpleFin' | 'goCardless' | null;
   last_reconciled?: string | null;

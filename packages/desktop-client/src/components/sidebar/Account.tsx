@@ -157,7 +157,7 @@ export function Account<FieldName extends SheetFields<'account'>>({
     [account?.id, isGoldAccount],
   );
   const goldQuantity = calculateGoldSummary(goldLots ?? [], 0).quantityChi;
-  const isExcluded = account?.exclude_from_totals === true;
+  const isExcluded = Boolean(account?.exclude_from_totals);
   const balanceCell = (
     <View
       style={{

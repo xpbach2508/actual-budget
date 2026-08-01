@@ -258,6 +258,10 @@ export function Balances({
                 style={{
                   fontSize: 22,
                   fontWeight: 400,
+                  opacity: Boolean(account?.exclude_from_totals) ? 0.6 : 1,
+                  fontStyle: Boolean(account?.exclude_from_totals)
+                    ? 'italic'
+                    : 'normal',
                   color:
                     props.value < 0
                       ? theme.numberNegative
