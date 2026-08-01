@@ -596,3 +596,23 @@ When running the app for manual testing or demos, use **"View demo"** on the ini
 - Lage caches test results in `.lage/`. If tests behave unexpectedly, clear with `rm -rf .lage`.
 - Native modules (`better-sqlite3`, `bcrypt`) require build tools (`gcc`, `make`, `python3`). These are pre-installed in the Cloud VM.
 - All yarn commands must be run from the repository root, never from child workspaces.
+
+## Lessons Learned: SQLite Param Types & Model Mappers in Local CRDT Sync
+
+### 1. SQLite Parameter Types in absurd-sql / sql.js
+- **Never pass JavaScript boolean values (`true`/`false`) as raw SQL parameters** into `db.update` or CRDT sync messages.
+- The `sql.js` / `verifyParamTypes` validator throws `SyncError: invalid-schema` with message: `Invalid field type true for sql`.
+- **Rule:** Always normalize boolean columns to integers (`1` or `0`) when updating SQLite records or sending sync updates (`exclude_from_totals: exclude_from_totals ? 1 : 0`).
+
+### 2. Backend Model Mappers & Frontend State Sync
+- When adding a new field to a database table (e.g. `exclude_from_totals` on `accounts`), ensure it is mapped in:
+  1. `getAccounts()` in `packages/loot-core/src/server/accounts/app.ts` (`exclude_from_totals: dbAccount.exclude_from_totals ?? 0`)
+  2. `toExternal()` and `fromExternal()` in `packages/loot-core/src/server/api-models.ts`
+  3. `DbAccount` and `APIAccountEntity` TypeScript type definitions
+- If a field is omitted from `getAccounts()`, the frontend receives `undefined` for that field, causing state toggles (`account.exclude_from_totals ? 0 : 1`) to evaluate incorrectly.
+
+### 3. Visual UI Consistency for Excluded Accounts
+- Accounts excluded from summary totals must be visually distinct:
+  - Display an `[Excluded from totals]` badge on the account header (`Header.tsx`).
+  - Render muted italic font (`opacity: 0.6`, `fontStyle: 'italic'`) on sidebar items (`sidebar/Account.tsx`) and account header balances (`Balance.tsx`).
+
