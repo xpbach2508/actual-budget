@@ -26,6 +26,7 @@ export const accountModel = {
       name: account.name,
       offbudget: account.offbudget ? true : false,
       closed: account.closed ? true : false,
+      exclude_from_totals: account.exclude_from_totals ? true : false,
       balance_current: account.balance_current ?? null,
     };
   },

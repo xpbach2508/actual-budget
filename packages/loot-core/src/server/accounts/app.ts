@@ -141,6 +141,7 @@ async function getAccounts(): Promise<AccountEntity[]> {
           null,
         gold_current_price_per_chi:
           dbAccount.gold_current_price_per_chi ?? null,
+        exclude_from_totals: dbAccount.exclude_from_totals ?? 0,
       }) satisfies AccountEntity,
   );
 }
