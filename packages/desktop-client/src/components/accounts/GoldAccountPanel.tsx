@@ -14,6 +14,7 @@ import { toRelaxedNumber } from '@actual-app/core/shared/util';
 import type { AccountEntity } from '@actual-app/core/types/models';
 
 import {
+  useGoldLivePriceMutation,
   useGoldManualAddMutation,
   useGoldPriceMutation,
   useGoldPurchaseMutation,
@@ -52,46 +53,24 @@ export function GoldAccountPanel({ account, accounts }: GoldAccountPanelProps) {
   const [totalCost, setTotalCost] = useState('');
   const [price, setPrice] = useState('');
   const [sourceAccountId, setSourceAccountId] = useState('');
-  const [isFetchingPrice, setIsFetchingPrice] = useState(false);
   const manualAdd = useGoldManualAddMutation();
   const purchase = useGoldPurchaseMutation();
   const updatePrice = useGoldPriceMutation();
+  const livePriceMutation = useGoldLivePriceMutation();
   const currentPrice = account.gold_current_price_per_chi ?? 0;
   const summary = calculateGoldSummary(lots, currentPrice);
 
-  const fetchLivePrice = async () => {
-    setIsFetchingPrice(true);
-    try {
-      const urls = [
-        'http://bank-webhook:8000/gold/prices/latest',
-        'http://localhost:8100/gold/prices/latest',
-        'http://localhost:8000/gold/prices/latest',
-        'http://localhost:8080/gold/prices/latest',
-        '/gold/prices/latest',
-      ];
-      let res: Response | null = null;
-      for (const url of urls) {
-        try {
-          res = await fetch(url);
-          if (res.ok) break;
-        } catch {
-          // try next URL
+  const fetchLivePrice = () => {
+    livePriceMutation.mutate(undefined, {
+      onSuccess: data => {
+        if (data?.pricePerChi) {
+          setPrice(String(data.pricePerChi));
         }
-      }
-      if (!res || !res.ok) throw new Error('Failed to fetch live price');
-      const data = await res.json();
-      const prices = data.prices || [];
-      const sjcPrice =
-        prices.find((p: { provider: string }) => p.provider === 'SJC') ||
-        prices[0];
-      if (sjcPrice?.sell_price_per_chi) {
-        setPrice(String(sjcPrice.sell_price_per_chi));
-      }
-    } catch (err) {
-      console.warn('Could not fetch live gold price:', err);
-    } finally {
-      setIsFetchingPrice(false);
-    }
+      },
+      onError: err => {
+        console.warn('Could not fetch live gold price from backend:', err);
+      },
+    });
   };
 
   const quantityChi = normalizeGoldQuantity(
@@ -217,7 +196,7 @@ export function GoldAccountPanel({ account, accounts }: GoldAccountPanelProps) {
             placeholder="Giá VND/chỉ"
             onChangeValue={setPrice}
           />
-          <Button onPress={fetchLivePrice} isLoading={isFetchingPrice}>
+          <Button onPress={fetchLivePrice} isLoading={livePriceMutation.isPending}>
             Lấy giá thị trường (SJC)
           </Button>
           <Button onPress={savePrice}>Lưu giá</Button>

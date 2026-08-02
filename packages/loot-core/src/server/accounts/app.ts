@@ -66,6 +66,7 @@ export type AccountHandlers = {
   'gold-purchase': typeof purchaseGold;
   'gold-manual-add': typeof addGoldManually;
   'gold-update-price': typeof updateGoldPrice;
+  'gold-fetch-live-price': typeof fetchLiveGoldPrice;
   'account-close': typeof closeAccount;
   'account-reopen': typeof reopenAccount;
   'account-move': typeof moveAccount;
@@ -633,6 +634,34 @@ async function revalueGoldAccount(
       notes: 'Gold price revaluation',
     });
   }
+}
+
+async function fetchLiveGoldPrice(): Promise<{ pricePerChi: number }> {
+  const urls = [
+    'http://bank-webhook:8000/gold/prices/latest',
+    'http://localhost:8100/gold/prices/latest',
+    'http://localhost:8000/gold/prices/latest',
+    'http://localhost:8080/gold/prices/latest',
+  ];
+  for (const url of urls) {
+    try {
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = (await res.json()) as {
+          prices?: Array<{ provider?: string; sell_price_per_chi?: number }>;
+        };
+        const prices = data.prices || [];
+        const sjcPrice =
+          prices.find(p => p.provider === 'SJC') || prices[0];
+        if (sjcPrice?.sell_price_per_chi) {
+          return { pricePerChi: sjcPrice.sell_price_per_chi };
+        }
+      }
+    } catch {
+      // try next URL
+    }
+  }
+  throw new Error('Could not fetch live gold price from bank-webhook service');
 }
 
 async function createAccount({
@@ -1972,6 +2001,7 @@ app.method('account-create', mutator(undoable(createAccount)));
 app.method('gold-purchase', mutator(undoable(purchaseGold)));
 app.method('gold-manual-add', mutator(undoable(addGoldManually)));
 app.method('gold-update-price', mutator(undoable(updateGoldPrice)));
+app.method('gold-fetch-live-price', fetchLiveGoldPrice);
 app.method('account-close', mutator(closeAccount));
 app.method('account-reopen', mutator(undoable(reopenAccount)));
 app.method('account-move', mutator(undoable(moveAccount)));
