@@ -660,6 +660,7 @@ async function fetchLiveGoldPrice(): Promise<{ pricePerChi: number }> {
 
   for (const url of urls) {
     try {
+      console.info(`[GoldPrice] Server attempting fetch from: ${url}`);
       const res = await fetch(url);
       if (res.ok) {
         const data = (await res.json()) as {
@@ -669,11 +670,14 @@ async function fetchLiveGoldPrice(): Promise<{ pricePerChi: number }> {
         const sjcPrice =
           prices.find(p => p.provider === 'SJC') || prices[0];
         if (sjcPrice?.sell_price_per_chi) {
+          console.info(
+            `[GoldPrice] Server successfully fetched price from ${url}: ${sjcPrice.sell_price_per_chi} VND/chỉ`,
+          );
           return { pricePerChi: sjcPrice.sell_price_per_chi };
         }
       }
-    } catch {
-      // try next URL
+    } catch (err) {
+      console.warn(`[GoldPrice] Server fetch candidate failed (${url}):`, err);
     }
   }
   throw new Error('Could not fetch live gold price from bank-webhook service');

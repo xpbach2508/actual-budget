@@ -62,14 +62,18 @@ export function GoldAccountPanel({ account, accounts }: GoldAccountPanelProps) {
 
   const fetchLivePrice = async () => {
     try {
+      console.info('[GoldPrice] Attempting live price fetch via backend IPC...');
       const data = await livePriceMutation.mutateAsync(undefined);
       if (data?.pricePerChi) {
+        console.info(
+          `[GoldPrice] Successfully fetched live price via backend IPC: ${data.pricePerChi} VND/chỉ`,
+        );
         setPrice(String(data.pricePerChi));
         return;
       }
     } catch (err) {
       console.warn(
-        'Backend IPC fetch failed, attempting browser direct fetch fallback:',
+        '[GoldPrice] Backend IPC fetch failed, attempting browser direct fetch fallback:',
         err,
       );
     }
@@ -94,6 +98,7 @@ export function GoldAccountPanel({ account, accounts }: GoldAccountPanelProps) {
 
     for (const url of urls) {
       try {
+        console.info(`[GoldPrice] Trying browser fallback fetch: ${url}`);
         const res = await fetch(url);
         if (res.ok) {
           const resData = await res.json();
@@ -102,14 +107,18 @@ export function GoldAccountPanel({ account, accounts }: GoldAccountPanelProps) {
             prices.find((p: { provider?: string }) => p.provider === 'SJC') ||
             prices[0];
           if (sjcPrice?.sell_price_per_chi) {
+            console.info(
+              `[GoldPrice] Successfully fetched live price from ${url}: ${sjcPrice.sell_price_per_chi} VND/chỉ`,
+            );
             setPrice(String(sjcPrice.sell_price_per_chi));
             return;
           }
         }
-      } catch {
-        // try next URL
+      } catch (err) {
+        console.warn(`[GoldPrice] Candidate URL failed (${url}):`, err);
       }
     }
+    console.error('[GoldPrice] All gold price fetch candidates failed:', urls);
   };
 
   const quantityChi = normalizeGoldQuantity(
