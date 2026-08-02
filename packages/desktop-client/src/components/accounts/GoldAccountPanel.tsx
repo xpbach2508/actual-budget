@@ -99,23 +99,35 @@ export function GoldAccountPanel({ account, accounts }: GoldAccountPanelProps) {
     reset();
   };
 
+  const sign = summary.gainLoss > 0 ? '+' : '';
+  const glColor = summary.gainLoss >= 0 ? '#4caf50' : '#e57373';
+
   return (
     <View style={{ gap: 10, margin: '0 15px 12px' }}>
-      <View style={{ flexDirection: 'row', gap: 24 }}>
+      <View style={{ flexDirection: 'row', gap: 24, flexWrap: 'wrap' }}>
         <View>
-          <Text>Tổng vàng</Text>
+          <Text style={{ color: '#888', fontSize: 12 }}>Tổng vàng</Text>
           <strong>{summary.quantityChi} chỉ</strong>
         </View>
         <View>
-          <Text>Giá trị hiện tại</Text>
-          <strong>{formatVnd.format(summary.currentValue)}</strong>
+          <Text style={{ color: '#888', fontSize: 12 }}>Tổng vốn đầu tư</Text>
+          <strong>{formatVnd.format(summary.costBasis)}</strong>
         </View>
         <View>
-          <Text>Lãi/lỗ</Text>
-          <strong
-            style={{ color: summary.gainLoss >= 0 ? '#4caf50' : '#e57373' }}
-          >
-            {formatVnd.format(summary.gainLoss)}
+          <Text style={{ color: '#888', fontSize: 12 }}>Giá trị hiện tại</Text>
+          <strong>{formatVnd.format(summary.currentValue)}</strong>
+          {currentPrice > 0 && (
+            <Text style={{ fontSize: 11, color: '#aaa', marginLeft: 4 }}>
+              ({formatVnd.format(currentPrice)}/chỉ)
+            </Text>
+          )}
+        </View>
+        <View>
+          <Text style={{ color: '#888', fontSize: 12 }}>Lãi/lỗ chưa thực hiện</Text>
+          <strong style={{ color: glColor }}>
+            {sign}
+            {formatVnd.format(summary.gainLoss)} ({sign}
+            {summary.gainLossPercentage.toFixed(2)}%)
           </strong>
         </View>
       </View>
