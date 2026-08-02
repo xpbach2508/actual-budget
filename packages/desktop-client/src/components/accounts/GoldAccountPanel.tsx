@@ -63,6 +63,7 @@ export function GoldAccountPanel({ account, accounts }: GoldAccountPanelProps) {
     setIsFetchingPrice(true);
     try {
       const urls = [
+        'http://bank-webhook:8000/gold/prices/latest',
         'http://localhost:8100/gold/prices/latest',
         'http://localhost:8000/gold/prices/latest',
         'http://localhost:8080/gold/prices/latest',
