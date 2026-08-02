@@ -62,7 +62,12 @@ export function GoldAccountPanel({ account, accounts }: GoldAccountPanelProps) {
   const fetchLivePrice = async () => {
     setIsFetchingPrice(true);
     try {
-      const urls = ['http://localhost:8080/gold/prices/latest', '/gold/prices/latest'];
+      const urls = [
+        'http://localhost:8100/gold/prices/latest',
+        'http://localhost:8000/gold/prices/latest',
+        'http://localhost:8080/gold/prices/latest',
+        '/gold/prices/latest',
+      ];
       let res: Response | null = null;
       for (const url of urls) {
         try {
