@@ -268,8 +268,10 @@ type TransactionListProps = Pick<
   | 'showAccount'
   | 'showBalances'
   | 'showCleared'
+  | 'showGroup'
   | 'showReconciled'
   | 'showSelection'
+  | 'columnOrder'
   | 'sortField'
   | 'transactions'
 > & {
@@ -303,7 +305,9 @@ export function TransactionList({
   showBalances,
   showReconciled,
   showCleared,
+  showGroup,
   showAccount,
+  columnOrder,
   isAdding,
   isNew,
   isMatched,
@@ -759,6 +763,8 @@ export function TransactionList({
         showCleared={showCleared}
         showAccount={showAccount}
         showCategory
+        showGroup={showGroup}
+        columnOrder={columnOrder}
         currentAccountId={account && account.id}
         currentCategoryId={category && category.id}
         goldQuantityByTransaction={
