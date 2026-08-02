@@ -18,6 +18,7 @@ describe('gold calculations', () => {
       costBasis: 21_000_000,
       currentValue: 24_000_000,
       gainLoss: 3_000_000,
+      gainLossPercentage: (3_000_000 / 21_000_000) * 100,
     });
   });
 });

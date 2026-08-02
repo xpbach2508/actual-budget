@@ -22,10 +22,14 @@ export function calculateGoldSummary(
   );
   const currentValue = quantityChi * currentPricePerChi;
 
+  const gainLoss = currentValue - costBasis;
+  const gainLossPercentage = costBasis > 0 ? (gainLoss / costBasis) * 100 : 0;
+
   return {
     quantityChi,
     costBasis,
     currentValue,
-    gainLoss: currentValue - costBasis,
+    gainLoss,
+    gainLossPercentage,
   };
 }
