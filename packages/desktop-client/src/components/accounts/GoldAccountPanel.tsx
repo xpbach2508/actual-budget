@@ -60,17 +60,56 @@ export function GoldAccountPanel({ account, accounts }: GoldAccountPanelProps) {
   const currentPrice = account.gold_current_price_per_chi ?? 0;
   const summary = calculateGoldSummary(lots, currentPrice);
 
-  const fetchLivePrice = () => {
-    livePriceMutation.mutate(undefined, {
-      onSuccess: data => {
-        if (data?.pricePerChi) {
-          setPrice(String(data.pricePerChi));
+  const fetchLivePrice = async () => {
+    try {
+      const data = await livePriceMutation.mutateAsync(undefined);
+      if (data?.pricePerChi) {
+        setPrice(String(data.pricePerChi));
+        return;
+      }
+    } catch (err) {
+      console.warn(
+        'Backend IPC fetch failed, attempting browser direct fetch fallback:',
+        err,
+      );
+    }
+
+    const candidateUrls: string[] = [];
+    if (typeof window !== 'undefined' && window.location?.origin) {
+      candidateUrls.push(`${window.location.origin}/gold/prices/latest`);
+      const protocol = window.location.protocol || 'http:';
+      const hostname = window.location.hostname;
+      if (hostname && hostname !== 'localhost' && hostname !== '127.0.0.1') {
+        candidateUrls.push(`${protocol}//${hostname}:8100/gold/prices/latest`);
+      }
+    }
+    candidateUrls.push(
+      'http://bank-webhook:8000/gold/prices/latest',
+      'http://localhost:8100/gold/prices/latest',
+      'http://localhost:8000/gold/prices/latest',
+      'http://localhost:8080/gold/prices/latest',
+      '/gold/prices/latest',
+    );
+    const urls = Array.from(new Set(candidateUrls));
+
+    for (const url of urls) {
+      try {
+        const res = await fetch(url);
+        if (res.ok) {
+          const resData = await res.json();
+          const prices = resData.prices || [];
+          const sjcPrice =
+            prices.find((p: { provider?: string }) => p.provider === 'SJC') ||
+            prices[0];
+          if (sjcPrice?.sell_price_per_chi) {
+            setPrice(String(sjcPrice.sell_price_per_chi));
+            return;
+          }
         }
-      },
-      onError: err => {
-        console.warn('Could not fetch live gold price from backend:', err);
-      },
-    });
+      } catch {
+        // try next URL
+      }
+    }
   };
 
   const quantityChi = normalizeGoldQuantity(

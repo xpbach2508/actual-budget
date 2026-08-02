@@ -637,12 +637,27 @@ async function revalueGoldAccount(
 }
 
 async function fetchLiveGoldPrice(): Promise<{ pricePerChi: number }> {
-  const urls = [
+  const candidateUrls: string[] = [];
+
+  if (typeof location !== 'undefined' && location.origin) {
+    candidateUrls.push(`${location.origin}/gold/prices/latest`);
+    const protocol = location.protocol || 'http:';
+    const hostname = location.hostname;
+    if (hostname && hostname !== 'localhost' && hostname !== '127.0.0.1') {
+      candidateUrls.push(`${protocol}//${hostname}:8100/gold/prices/latest`);
+    }
+  }
+
+  candidateUrls.push(
     'http://bank-webhook:8000/gold/prices/latest',
     'http://localhost:8100/gold/prices/latest',
     'http://localhost:8000/gold/prices/latest',
     'http://localhost:8080/gold/prices/latest',
-  ];
+    '/gold/prices/latest',
+  );
+
+  const urls = Array.from(new Set(candidateUrls));
+
   for (const url of urls) {
     try {
       const res = await fetch(url);
