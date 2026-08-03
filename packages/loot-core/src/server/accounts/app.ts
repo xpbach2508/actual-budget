@@ -66,7 +66,6 @@ export type AccountHandlers = {
   'gold-purchase': typeof purchaseGold;
   'gold-manual-add': typeof addGoldManually;
   'gold-update-price': typeof updateGoldPrice;
-  'gold-fetch-live-price': typeof fetchLiveGoldPrice;
   'account-close': typeof closeAccount;
   'account-reopen': typeof reopenAccount;
   'account-move': typeof moveAccount;
@@ -624,74 +623,6 @@ async function assertGoldAccount(accountId: AccountEntity['id']) {
     throw new Error('Account is not a Gold account');
   }
   return account;
-}
-
-type GoldPriceResponse = {
-  prices?: Array<{ provider?: string; sell_price_per_chi?: number }>;
-};
-
-async function readGoldPriceResponse(
-  response: Response,
-): Promise<GoldPriceResponse | null> {
-  const contentType = response.headers.get('content-type')?.toLowerCase() ?? '';
-  if (!contentType.includes('application/json')) {
-    console.warn(
-      `[GoldPrice] Skipping non-JSON response (${contentType || 'unknown content type'})`,
-    );
-    return null;
-  }
-
-  try {
-    return (await response.json()) as GoldPriceResponse;
-  } catch {
-    console.warn('[GoldPrice] Skipping malformed JSON response');
-    return null;
-  }
-}
-
-async function fetchLiveGoldPrice(): Promise<{ pricePerChi: number }> {
-  const candidateUrls: string[] = [
-    // Prefer the Docker-internal service name when Actual runs beside bank-webhook.
-    'http://bank-webhook:8000/gold/prices/latest',
-    'http://localhost:8100/gold/prices/latest',
-    'http://localhost:8000/gold/prices/latest',
-    'http://localhost:8080/gold/prices/latest',
-  ];
-
-  if (typeof location !== 'undefined' && location.origin) {
-    const protocol = location.protocol || 'http:';
-    const hostname = location.hostname;
-    if (hostname && hostname !== 'localhost' && hostname !== '127.0.0.1') {
-      candidateUrls.push(`${protocol}//${hostname}:8100/gold/prices/latest`);
-    }
-    candidateUrls.push(`${location.origin}/gold/prices/latest`);
-  }
-
-  candidateUrls.push('/gold/prices/latest');
-
-  const urls = Array.from(new Set(candidateUrls));
-
-  for (const url of urls) {
-    try {
-      console.info(`[GoldPrice] Server attempting fetch from: ${url}`);
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await readGoldPriceResponse(res);
-        if (!data) continue;
-        const prices = data.prices || [];
-        const sjcPrice = prices.find(p => p.provider === 'SJC') || prices[0];
-        if (sjcPrice?.sell_price_per_chi) {
-          console.info(
-            `[GoldPrice] Server successfully fetched price from ${url}: ${sjcPrice.sell_price_per_chi} VND/chỉ`,
-          );
-          return { pricePerChi: sjcPrice.sell_price_per_chi };
-        }
-      }
-    } catch (err) {
-      console.warn(`[GoldPrice] Server fetch candidate failed (${url}):`, err);
-    }
-  }
-  throw new Error('Could not fetch live gold price from bank-webhook service');
 }
 
 async function createAccount({
@@ -2022,7 +1953,6 @@ app.method('account-create', mutator(undoable(createAccount)));
 app.method('gold-purchase', mutator(undoable(purchaseGold)));
 app.method('gold-manual-add', mutator(undoable(addGoldManually)));
 app.method('gold-update-price', mutator(undoable(updateGoldPrice)));
-app.method('gold-fetch-live-price', fetchLiveGoldPrice);
 app.method('account-close', mutator(closeAccount));
 app.method('account-reopen', mutator(undoable(reopenAccount)));
 app.method('account-move', mutator(undoable(moveAccount)));

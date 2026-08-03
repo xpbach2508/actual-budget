@@ -176,19 +176,6 @@ export function useGoldPriceMutation(): UseMutationResult<
   );
 }
 
-export function useGoldLivePriceMutation(): UseMutationResult<
-  { pricePerChi: number },
-  Error,
-  void
-> {
-  return useMutation({
-    mutationFn: async () => {
-      const result = await send('gold-fetch-live-price', undefined);
-      return result;
-    },
-  });
-}
-
 type CloseAccountPayload = {
   id: AccountEntity['id'];
   transferAccountId?: AccountEntity['id'];
