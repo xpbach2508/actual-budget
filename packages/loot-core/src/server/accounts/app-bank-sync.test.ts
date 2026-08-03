@@ -16,6 +16,7 @@ vi.mock('./sync', async () => ({
 const simpleFinBatchSyncHandler = app.handlers['simplefin-batch-sync'];
 const accountsBankSyncHandler = app.handlers['accounts-bank-sync'];
 const goldManualAddHandler = app.handlers['gold-manual-add'];
+const goldUpdatePriceHandler = app.handlers['gold-update-price'];
 
 function insertBank(bank: { id: string; bank_id: string; name: string }) {
   db.runQuery(
@@ -79,6 +80,31 @@ describe('gold-manual-add', () => {
 
     expect(lot?.transfer_id).toBe(transaction?.id);
     expect(lot?.date).toBe(20260726);
+  });
+
+  it('does not insert a revaluation transaction when the price changes', async () => {
+    await db.insertAccount({
+      id: 'gold-account',
+      name: 'Gold',
+      account_subtype: 'gold',
+    });
+
+    await goldManualAddHandler({
+      accountId: 'gold-account',
+      date: '2026-07-26',
+      quantityChi: 1,
+      totalCost: 7_000_000,
+    });
+    await goldUpdatePriceHandler({
+      accountId: 'gold-account',
+      pricePerChi: 8_000_000,
+    });
+
+    const transactions = await db.all<{ notes: string | null }>(
+      'SELECT notes FROM transactions WHERE acct = ? AND tombstone = 0',
+      ['gold-account'],
+    );
+    expect(transactions).toEqual([{ notes: null }]);
   });
 
   it('rejects invalid lot dates before writing a transaction', async () => {

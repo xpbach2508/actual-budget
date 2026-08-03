@@ -9,6 +9,7 @@ import { useMoveAccountMutation } from '#accounts';
 import { isAccountFailedSync } from '#accounts/syncStatus';
 import { useAccounts } from '#hooks/useAccounts';
 import { useClosedAccounts } from '#hooks/useClosedAccounts';
+import { useGoldVirtualAdjustment } from '#hooks/useGoldVirtualAdjustment';
 import { useLocalPref } from '#hooks/useLocalPref';
 import { useOffBudgetAccounts } from '#hooks/useOffBudgetAccounts';
 import { useOnBudgetAccounts } from '#hooks/useOnBudgetAccounts';
@@ -29,6 +30,7 @@ export function Accounts() {
   const { data: offbudgetAccounts = [] } = useOffBudgetAccounts();
   const { data: onBudgetAccounts = [] } = useOnBudgetAccounts();
   const { data: closedAccounts = [] } = useClosedAccounts();
+  const goldVirtualAdjustment = useGoldVirtualAdjustment(offbudgetAccounts);
   const syncingAccountIds = useSelector(state => state.account.accountsSyncing);
 
   const getAccountPath = (account: AccountEntity) => `/accounts/${account.id}`;
@@ -143,6 +145,7 @@ export function Accounts() {
             }}
             titleAccount
             balanceTestId="sidebar-off-budget-balance"
+            balanceAdjustment={goldVirtualAdjustment}
           />
         )}
 

@@ -28,7 +28,7 @@ import { Link } from '#components/common/Link';
 import { Notes } from '#components/Notes';
 import { DropHighlight, useDraggable, useDroppable } from '#components/sort';
 import type { OnDragChangeCallback, OnDropCallback } from '#components/sort';
-import { CellValue } from '#components/spreadsheet/CellValue';
+import { CellValue, CellValueText } from '#components/spreadsheet/CellValue';
 import { useContextMenu } from '#hooks/useContextMenu';
 import { useDragRef } from '#hooks/useDragRef';
 import { useIsTestEnv } from '#hooks/useIsTestEnv';
@@ -69,6 +69,7 @@ type AccountProps<FieldName extends SheetFields<'account'>> = {
   titleAccount?: boolean;
   isExactPathMatch?: boolean;
   balanceTestId?: string;
+  balanceAdjustment?: number;
 };
 
 const getSubtypeIcon = (subtype?: string | null) => {
@@ -102,6 +103,7 @@ export function Account<FieldName extends SheetFields<'account'>>({
   titleAccount,
   isExactPathMatch,
   balanceTestId,
+  balanceAdjustment = 0,
 }: AccountProps<FieldName>) {
   const isTestEnv = useIsTestEnv();
   const { t } = useTranslation();
@@ -171,7 +173,11 @@ export function Account<FieldName extends SheetFields<'account'>>({
       {isGoldAccount ? (
         <Text>{formatGoldQuantity(goldQuantity)}</Text>
       ) : (
-        <CellValue binding={query} type="financial" />
+        <CellValue binding={query} type="financial">
+          {props => (
+            <CellValueText {...props} value={props.value + balanceAdjustment} />
+          )}
+        </CellValue>
       )}
     </View>
   );

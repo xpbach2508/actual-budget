@@ -626,33 +626,6 @@ async function assertGoldAccount(accountId: AccountEntity['id']) {
   return account;
 }
 
-async function revalueGoldAccount(
-  accountId: AccountEntity['id'],
-  pricePerChi: number,
-) {
-  const lots = await db.first<{ quantity_chi: number }>(
-    'SELECT COALESCE(SUM(quantity_chi), 0) AS quantity_chi FROM gold_lots WHERE account_id = ? AND tombstone = 0',
-    [accountId],
-  );
-  const currentValue = (lots?.quantity_chi ?? 0) * pricePerChi;
-  const balance = await getAccountBalance({
-    id: accountId,
-    cutoff: monthUtils.currentDay(),
-  });
-  const adjustment = currentValue - balance;
-
-  if (adjustment !== 0) {
-    await db.insertTransaction({
-      account: accountId,
-      amount: adjustment,
-      category: null,
-      date: monthUtils.currentDay(),
-      cleared: true,
-      notes: 'Gold price revaluation',
-    });
-  }
-}
-
 type GoldPriceResponse = {
   prices?: Array<{ provider?: string; sell_price_per_chi?: number }>;
 };
@@ -806,10 +779,6 @@ async function purchaseGold({
     totalCost,
     transferId: transfer.transfer_id,
   });
-  const account = await assertGoldAccount(accountId);
-  if (account.gold_current_price_per_chi != null) {
-    await revalueGoldAccount(accountId, account.gold_current_price_per_chi);
-  }
   connection.send('sync-event', {
     type: 'success',
     tables: ['transactions', 'gold_lots', 'accounts'],
@@ -840,10 +809,6 @@ async function addGoldManually({
     totalCost,
     transferId: transactionId,
   });
-  const account = await assertGoldAccount(accountId);
-  if (account.gold_current_price_per_chi != null) {
-    await revalueGoldAccount(accountId, account.gold_current_price_per_chi);
-  }
   connection.send('sync-event', {
     type: 'success',
     tables: ['transactions', 'gold_lots', 'accounts'],
@@ -867,7 +832,6 @@ async function updateGoldPrice({
     id: accountId,
     gold_current_price_per_chi: storedPrice,
   });
-  await revalueGoldAccount(accountId, storedPrice);
   connection.send('sync-event', {
     type: 'success',
     tables: ['transactions', 'gold_lots', 'accounts'],

@@ -29,6 +29,8 @@ export function createSpreadsheet(
   interval: string = 'Monthly',
   firstDayOfWeekIdx: string = '0',
   format: (value: unknown, type?: FormatType) => string,
+  currentGoldAdjustment = 0,
+  applyCurrentGoldAdjustment = false,
 ) {
   return async (
     spreadsheet: ReturnType<typeof useSpreadsheet>,
@@ -178,12 +180,14 @@ export function createSpreadsheet(
         interval,
         firstDayOfWeekIdx,
         format,
+        currentGoldAdjustment,
+        applyCurrentGoldAdjustment,
       ),
     );
   };
 }
 
-function recalculate(
+export function recalculate(
   data: Array<{
     id: string;
     name: string;
@@ -196,6 +200,8 @@ function recalculate(
   interval: string = 'Monthly',
   firstDayOfWeekIdx: string = '0',
   format: (value: unknown, type?: FormatType) => string,
+  currentGoldAdjustment = 0,
+  applyCurrentGoldAdjustment = false,
 ) {
   // Get intervals using the same pattern as other working spreadsheets
   const intervals =
@@ -259,6 +265,15 @@ function recalculate(
       }
       total += balance;
     });
+
+    if (applyCurrentGoldAdjustment && idx === intervals.length - 1) {
+      total += currentGoldAdjustment;
+      if (currentGoldAdjustment < 0) {
+        debt += -currentGoldAdjustment;
+      } else {
+        assets += currentGoldAdjustment;
+      }
+    }
 
     if (total < 0) {
       hasNegative = true;

@@ -24,6 +24,7 @@ import { calculateTimeRange } from '#components/reports/reportRanges';
 import { createSpreadsheet as netWorthSpreadsheet } from '#components/reports/spreadsheets/net-worth-spreadsheet';
 import { useReport } from '#components/reports/useReport';
 import { useFormat } from '#hooks/useFormat';
+import { useGoldVirtualAdjustment } from '#hooks/useGoldVirtualAdjustment';
 import { useLocale } from '#hooks/useLocale';
 import { useSyncedPref } from '#hooks/useSyncedPref';
 
@@ -48,6 +49,7 @@ export function NetWorthCard({
   const [_firstDayOfWeekIdx] = useSyncedPref('firstDayOfWeekIdx');
   const firstDayOfWeekIdx = _firstDayOfWeekIdx || '0';
   const format = useFormat();
+  const goldVirtualAdjustment = useGoldVirtualAdjustment(accounts);
 
   const [latestTransaction, setLatestTransaction] = useState<string>('');
   const [nameMenuOpen, setNameMenuOpen] = useState(false);
@@ -70,6 +72,8 @@ export function NetWorthCard({
   );
   const onCardHover = useCallback(() => setIsCardHovered(true), []);
   const onCardHoverEnd = useCallback(() => setIsCardHovered(false), []);
+  const applyCurrentGoldAdjustment =
+    monthUtils.monthFromDate(end) === monthUtils.currentMonth();
 
   const params = useMemo(
     () =>
@@ -83,6 +87,8 @@ export function NetWorthCard({
         meta?.interval || 'Monthly',
         firstDayOfWeekIdx,
         format,
+        goldVirtualAdjustment,
+        applyCurrentGoldAdjustment,
       ),
     [
       start,
@@ -94,6 +100,8 @@ export function NetWorthCard({
       meta?.interval,
       firstDayOfWeekIdx,
       format,
+      goldVirtualAdjustment,
+      applyCurrentGoldAdjustment,
     ],
   );
   const data = useReport('net_worth', params);
