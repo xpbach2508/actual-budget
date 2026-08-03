@@ -349,7 +349,6 @@ const TransactionHeader = memo(
             />
           );
         })}
->>>>>>> upstream/master
       </Row>
     );
   },
@@ -1841,6 +1840,7 @@ const Transaction = memo(function Transaction({
               </SheetNameProvider>
             )}
           </CustomCell>
+        );
       case 'deposit':
         return (
           <InputCell
