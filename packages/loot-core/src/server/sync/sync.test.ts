@@ -190,7 +190,9 @@ describe('Sync projections', () => {
   test('recomputes the affected account balance after a synced transaction', async () => {
     const spreadsheet = await sheet.loadSpreadsheet(db);
     const balanceCell = '__global!balance-account-1';
+    const accountPageBalanceCell = '__global!balance-query-account-1';
     spreadsheet.add(balanceCell, 0);
+    spreadsheet.add(accountPageBalanceCell, 0);
     const recompute = vi.spyOn(spreadsheet, 'recompute');
 
     await applyMessages([
@@ -211,6 +213,7 @@ describe('Sync projections', () => {
     ]);
 
     expect(recompute).toHaveBeenCalledWith(balanceCell);
+    expect(recompute).toHaveBeenCalledWith(accountPageBalanceCell);
   });
 
   test('synced categories should have budgets created', async () => {

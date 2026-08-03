@@ -500,9 +500,14 @@ export const applyMessages = sequential(async (messages: Message[]) => {
           .filter(Boolean),
       );
       for (const accountId of affectedAccountIds) {
-        const fullName = resolveName('__global', `balance-${accountId}`);
-        if (s.hasCell(fullName)) {
-          s.recompute(fullName);
+        for (const cellName of [
+          `balance-${accountId}`,
+          `balance-query-${accountId}`,
+        ]) {
+          const fullName = resolveName('__global', cellName);
+          if (s.hasCell(fullName)) {
+            s.recompute(fullName);
+          }
         }
       }
     }
