@@ -187,6 +187,32 @@ function expectCellNotToExist(sheetName, name, voided?: boolean) {
 }
 
 describe('Sync projections', () => {
+  test('recomputes the affected account balance after a synced transaction', async () => {
+    const spreadsheet = await sheet.loadSpreadsheet(db);
+    const balanceCell = '__global!balance-account-1';
+    spreadsheet.add(balanceCell, 0);
+    const recompute = vi.spyOn(spreadsheet, 'recompute');
+
+    await applyMessages([
+      {
+        dataset: 'transactions',
+        row: 'transaction-1',
+        column: 'acct',
+        value: 'account-1',
+        timestamp: Timestamp.send(),
+      },
+      {
+        dataset: 'transactions',
+        row: 'transaction-1',
+        column: 'amount',
+        value: -2000000,
+        timestamp: Timestamp.send(),
+      },
+    ]);
+
+    expect(recompute).toHaveBeenCalledWith(balanceCell);
+  });
+
   test('synced categories should have budgets created', async () => {
     let groupId, fooId, barId;
     await asSecondClient(async () => {

@@ -490,6 +490,21 @@ export const applyMessages = sequential(async (messages: Message[]) => {
           s.recompute(fullName);
         }
       }
+
+      const affectedAccountIds = new Set(
+        idsPerTable.transactions
+          .flatMap(transactionId => [
+            getIn(oldData, ['transactions', transactionId])?.acct,
+            getIn(newData, ['transactions', transactionId])?.acct,
+          ])
+          .filter(Boolean),
+      );
+      for (const accountId of affectedAccountIds) {
+        const fullName = resolveName('__global', `balance-${accountId}`);
+        if (s.hasCell(fullName)) {
+          s.recompute(fullName);
+        }
+      }
     }
 
     // Allow the cache to be used in the future. At this point it's guaranteed
