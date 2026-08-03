@@ -99,6 +99,16 @@ import { AccountHeader } from './Header';
 
 type ConditionEntity = Partial<RuleConditionEntity> | TransactionFilterEntity;
 
+export function makeAccountBalanceQuery(query: Query, id?: string) {
+  return {
+    name: `balance-query-${id}`,
+    query: (id
+      ? query
+      : query.filter({ 'account.exclude_from_totals': false })
+    ).calculate({ $sum: '$amount' }),
+  } as const;
+}
+
 function isTransactionFilterEntity(
   filter: ConditionEntity,
 ): filter is TransactionFilterEntity {
@@ -1035,10 +1045,7 @@ class AccountInternal extends PureComponent<
   }
 
   getBalanceQuery(id?: string) {
-    return {
-      name: `balance-query-${id}`,
-      query: this.makeRootTransactionsQuery().calculate({ $sum: '$amount' }),
-    } as const;
+    return makeAccountBalanceQuery(this.makeRootTransactionsQuery(), id);
   }
 
   getFilteredAmount = async () => {
