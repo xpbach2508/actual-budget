@@ -1841,6 +1841,41 @@ const Transaction = memo(function Transaction({
             )}
           </CustomCell>
         );
+      case 'payment':
+        return (
+          <InputCell
+            key={columnId}
+            /* Debit field for all transactions */
+            type="input"
+            width={100}
+            name="debit"
+            exposed={focusedField === 'debit'}
+            focused={focusedField === 'debit'}
+            value={debit === '' && credit === '' ? amountToCurrency(0) : debit}
+            formatter={value =>
+              // reformat value so since we might have kept decimals
+              value ? amountToCurrency(currencyToAmount(value) || 0) : ''
+            }
+            valueStyle={valueStyle}
+            textAlign="right"
+            title={debit}
+            onExpose={name => !isPreview && onEdit(id, name)}
+            style={{
+              ...(isParent && { fontStyle: 'italic' }),
+              ...styles.tnum,
+              ...amountStyle,
+            }}
+            inputProps={{
+              value:
+                debit === '' && credit === '' ? amountToCurrency(0) : debit,
+              onUpdate: onUpdate.bind(null, 'debit'),
+              'data-1p-ignore': true,
+            }}
+            privacyFilter={{
+              activationFilters: [!isTemporaryId(transaction.id)],
+            }}
+          />
+        );
       case 'deposit':
         return (
           <InputCell
@@ -2867,6 +2902,7 @@ export const TransactionTable = forwardRef(
       showGroup,
       showBalances,
       showCleared,
+      goldQuantityByTransaction,
     } = props;
     const visibleColumns = useMemo(
       () =>
@@ -2882,6 +2918,8 @@ export const TransactionTable = forwardRef(
               return showBalances;
             case 'cleared':
               return showCleared;
+            case 'gold-quantity':
+              return goldQuantityByTransaction != null;
             default:
               return true;
           }
@@ -2893,6 +2931,7 @@ export const TransactionTable = forwardRef(
         showGroup,
         showBalances,
         showCleared,
+        goldQuantityByTransaction,
       ],
     );
     const [prevIsAdding, setPrevIsAdding] = useState(false);
