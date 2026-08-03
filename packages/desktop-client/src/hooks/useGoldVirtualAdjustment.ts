@@ -1,3 +1,7 @@
+import {
+  goldPricePreferenceKey,
+  resolveGoldPrice,
+} from '@actual-app/core/shared/gold-price-metadata';
 import { calculateGoldVirtualAdjustment } from '@actual-app/core/shared/gold-valuation';
 import { q } from '@actual-app/core/shared/query';
 import type { AccountEntity } from '@actual-app/core/types/models';
@@ -13,6 +17,11 @@ type GoldLot = {
 type TransactionAmount = {
   account: string;
   amount: number;
+};
+
+type Preference = {
+  id: string;
+  value: string | null;
 };
 
 export function getGoldLedgerBalances(
@@ -44,9 +53,22 @@ export function useGoldVirtualAdjustment(
         .select(['account', 'amount']),
     [],
   );
+  const { data: preferences } = useQuery<Preference>(
+    () => q('preferences').select(['id', 'value']),
+    [],
+  );
+  const preferenceValues = new Map(
+    (preferences ?? []).map(preference => [preference.id, preference.value]),
+  );
 
   return calculateGoldVirtualAdjustment(
-    accounts,
+    accounts.map(account => ({
+      ...account,
+      gold_current_price_per_chi: resolveGoldPrice(
+        preferenceValues.get(goldPricePreferenceKey(account.id)),
+        account.gold_current_price_per_chi,
+      ),
+    })),
     lots ?? [],
     getGoldLedgerBalances(transactions ?? []),
   );
