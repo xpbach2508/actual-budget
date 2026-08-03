@@ -175,7 +175,10 @@ export function Account<FieldName extends SheetFields<'account'>>({
       ) : (
         <CellValue binding={query} type="financial">
           {props => (
-            <CellValueText {...props} value={props.value + balanceAdjustment} />
+            <CellValueText
+              {...props}
+              value={Number(props.value) + balanceAdjustment}
+            />
           )}
         </CellValue>
       )}

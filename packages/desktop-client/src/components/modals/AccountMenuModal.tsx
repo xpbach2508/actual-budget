@@ -124,6 +124,7 @@ export function AccountMenuModal({
                 account={account}
                 onClose={onCloseAccount}
                 onReopen={onReopenAccount}
+                onSave={onSave}
                 onToggleRunningBalance={onToggleRunningBalance}
                 onToggleReconciled={onToggleReconciled}
               />
@@ -213,6 +214,7 @@ type AdditionalAccountMenuProps = {
   account: AccountEntity;
   onClose?: (accountId: string) => void;
   onReopen?: (accountId: string) => void;
+  onSave?: (account: AccountEntity) => void;
   onToggleRunningBalance?: () => void;
   onToggleReconciled?: () => void;
 };
@@ -221,6 +223,7 @@ function AdditionalAccountMenu({
   account,
   onClose,
   onReopen,
+  onSave,
   onToggleRunningBalance,
   onToggleReconciled,
 }: AdditionalAccountMenuProps) {
