@@ -9,12 +9,15 @@ import {
   calculateGoldSummary,
   normalizeGoldQuantity,
 } from '@actual-app/core/shared/gold';
+import {
+  goldPricePreferenceKey,
+  resolveGoldPrice,
+} from '@actual-app/core/shared/gold-price-metadata';
 import { q } from '@actual-app/core/shared/query';
 import { toRelaxedNumber } from '@actual-app/core/shared/util';
 import type { AccountEntity } from '@actual-app/core/types/models';
 
 import {
-  useGoldLivePriceMutation,
   useGoldManualAddMutation,
   useGoldPriceMutation,
   useGoldPurchaseMutation,
@@ -59,81 +62,18 @@ export function GoldAccountPanel({ account, accounts }: GoldAccountPanelProps) {
   const manualAdd = useGoldManualAddMutation();
   const purchase = useGoldPurchaseMutation();
   const updatePrice = useGoldPriceMutation();
-  const livePriceMutation = useGoldLivePriceMutation();
-  const currentPrice = account.gold_current_price_per_chi ?? 0;
+  const { data: preferences } = useQuery<{ id: string; value: string | null }>(
+    () =>
+      q('preferences')
+        .filter({ id: goldPricePreferenceKey(account.id) })
+        .select('*'),
+    [account.id],
+  );
+  const currentPrice = resolveGoldPrice(
+    preferences?.[0]?.value,
+    account.gold_current_price_per_chi,
+  );
   const summary = calculateGoldSummary(lots, currentPrice);
-
-  const fetchLivePrice = async () => {
-    try {
-      console.info(
-        '[GoldPrice] Attempting live price fetch via backend IPC...',
-      );
-      const data = await livePriceMutation.mutateAsync(undefined);
-      if (data?.pricePerChi) {
-        console.info(
-          `[GoldPrice] Successfully fetched live price via backend IPC: ${data.pricePerChi} VND/chỉ`,
-        );
-        setPrice(String(data.pricePerChi));
-        return;
-      }
-    } catch (err) {
-      console.warn(
-        '[GoldPrice] Backend IPC fetch failed, attempting browser direct fetch fallback:',
-        err,
-      );
-    }
-
-    const candidateUrls: string[] = [];
-    if (typeof window !== 'undefined' && window.location?.origin) {
-      candidateUrls.push(`${window.location.origin}/gold/prices/latest`);
-      const protocol = window.location.protocol || 'http:';
-      const hostname = window.location.hostname;
-      if (hostname && hostname !== 'localhost' && hostname !== '127.0.0.1') {
-        candidateUrls.push(`${protocol}//${hostname}:8100/gold/prices/latest`);
-      }
-    }
-    candidateUrls.push(
-      'http://bank-webhook:8000/gold/prices/latest',
-      'http://localhost:8100/gold/prices/latest',
-      'http://localhost:8000/gold/prices/latest',
-      'http://localhost:8080/gold/prices/latest',
-      '/gold/prices/latest',
-    );
-    const urls = Array.from(new Set(candidateUrls));
-
-    for (const url of urls) {
-      try {
-        console.info(`[GoldPrice] Trying browser fallback fetch: ${url}`);
-        const res = await fetch(url);
-        if (res.ok) {
-          const contentType =
-            res.headers.get('content-type')?.toLowerCase() ?? '';
-          if (!contentType.includes('application/json')) {
-            console.warn(
-              `[GoldPrice] Skipping non-JSON response from ${url} (${contentType || 'unknown content type'})`,
-            );
-            continue;
-          }
-
-          const resData = await res.json();
-          const prices = resData.prices || [];
-          const sjcPrice =
-            prices.find((p: { provider?: string }) => p.provider === 'SJC') ||
-            prices[0];
-          if (sjcPrice?.sell_price_per_chi) {
-            console.info(
-              `[GoldPrice] Successfully fetched live price from ${url}: ${sjcPrice.sell_price_per_chi} VND/chỉ`,
-            );
-            setPrice(String(sjcPrice.sell_price_per_chi));
-            return;
-          }
-        }
-      } catch (err) {
-        console.warn(`[GoldPrice] Candidate URL failed (${url}):`, err);
-      }
-    }
-    console.error('[GoldPrice] All gold price fetch candidates failed:', urls);
-  };
 
   const quantityChi = normalizeGoldQuantity(
     toRelaxedNumber(quantity) || 0,
@@ -260,12 +200,6 @@ export function GoldAccountPanel({ account, accounts }: GoldAccountPanelProps) {
             placeholder="Giá VND/chỉ"
             onChangeValue={setPrice}
           />
-          <Button
-            onPress={fetchLivePrice}
-            isLoading={livePriceMutation.isPending}
-          >
-            Lấy giá thị trường (SJC)
-          </Button>
           <Button onPress={savePrice}>Lưu giá</Button>
           <Button variant="bare" onPress={reset}>
             Hủy
