@@ -21,4 +21,21 @@ describe('gold calculations', () => {
       gainLossPercentage: (3_000_000 / 21_000_000) * 100,
     });
   });
+
+  it('excludes tombstoned lots from the summary', () => {
+    expect(
+      calculateGoldSummary(
+        [
+          { quantity_chi: 3, cost_per_chi: 7_000_000, tombstone: 0 },
+          { quantity_chi: 10, cost_per_chi: 9_000_000, tombstone: 1 },
+        ],
+        8_000_000,
+      ),
+    ).toMatchObject({
+      quantityChi: 3,
+      costBasis: 21_000_000,
+      currentValue: 24_000_000,
+      gainLoss: 3_000_000,
+    });
+  });
 });

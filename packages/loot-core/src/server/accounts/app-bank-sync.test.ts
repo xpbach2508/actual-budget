@@ -72,12 +72,36 @@ describe('gold-manual-add', () => {
       'SELECT id FROM transactions WHERE acct = ? AND tombstone = 0',
       ['gold-account'],
     );
-    const lot = await db.first<{ transfer_id: string }>(
-      'SELECT transfer_id FROM gold_lots WHERE account_id = ? AND tombstone = 0',
+    const lot = await db.first<{ transfer_id: string; date: number }>(
+      'SELECT transfer_id, date FROM gold_lots WHERE account_id = ? AND tombstone = 0',
       ['gold-account'],
     );
 
     expect(lot?.transfer_id).toBe(transaction?.id);
+    expect(lot?.date).toBe(20260726);
+  });
+
+  it('rejects invalid lot dates before writing a transaction', async () => {
+    await db.insertAccount({
+      id: 'gold-account',
+      name: 'Gold',
+      account_subtype: 'gold',
+    });
+
+    await expect(
+      goldManualAddHandler({
+        accountId: 'gold-account',
+        date: '2026-02-30',
+        quantityChi: 1,
+        totalCost: 8000000,
+      }),
+    ).rejects.toThrow('Gold date must be a valid YYYY-MM-DD date');
+
+    const transactionCount = await db.first<{ count: number }>(
+      'SELECT COUNT(*) AS count FROM transactions WHERE acct = ?',
+      ['gold-account'],
+    );
+    expect(transactionCount?.count).toBe(0);
   });
 });
 

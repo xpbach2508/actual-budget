@@ -152,7 +152,9 @@ export function Account<FieldName extends SheetFields<'account'>>({
   }>(
     () =>
       isGoldAccount && account
-        ? q('gold_lots').filter({ account_id: account.id }).select('*')
+        ? q('gold_lots')
+            .filter({ account_id: account.id, tombstone: 0 })
+            .select('*')
         : null,
     [account?.id, isGoldAccount],
   );

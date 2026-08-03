@@ -41,7 +41,10 @@ type GoldAccountPanelProps = {
 
 export function GoldAccountPanel({ account, accounts }: GoldAccountPanelProps) {
   const { data } = useQuery<GoldLot>(
-    () => q('gold_lots').filter({ account_id: account.id }).select('*'),
+    () =>
+      q('gold_lots')
+        .filter({ account_id: account.id, tombstone: 0 })
+        .select('*'),
     [account.id],
   );
   const lots = data ?? [];
@@ -62,7 +65,9 @@ export function GoldAccountPanel({ account, accounts }: GoldAccountPanelProps) {
 
   const fetchLivePrice = async () => {
     try {
-      console.info('[GoldPrice] Attempting live price fetch via backend IPC...');
+      console.info(
+        '[GoldPrice] Attempting live price fetch via backend IPC...',
+      );
       const data = await livePriceMutation.mutateAsync(undefined);
       if (data?.pricePerChi) {
         console.info(
@@ -186,7 +191,9 @@ export function GoldAccountPanel({ account, accounts }: GoldAccountPanelProps) {
           )}
         </View>
         <View>
-          <Text style={{ color: '#888', fontSize: 12 }}>Lãi/lỗ chưa thực hiện</Text>
+          <Text style={{ color: '#888', fontSize: 12 }}>
+            Lãi/lỗ chưa thực hiện
+          </Text>
           <strong style={{ color: glColor }}>
             {sign}
             {formatVnd.format(summary.gainLoss)} ({sign}
@@ -244,7 +251,10 @@ export function GoldAccountPanel({ account, accounts }: GoldAccountPanelProps) {
             placeholder="Giá VND/chỉ"
             onChangeValue={setPrice}
           />
-          <Button onPress={fetchLivePrice} isLoading={livePriceMutation.isPending}>
+          <Button
+            onPress={fetchLivePrice}
+            isLoading={livePriceMutation.isPending}
+          >
             Lấy giá thị trường (SJC)
           </Button>
           <Button onPress={savePrice}>Lưu giá</Button>

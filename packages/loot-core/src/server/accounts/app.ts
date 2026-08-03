@@ -569,12 +569,29 @@ type GoldLotInput = {
   transferId?: string | null;
 };
 
-function validateGoldLot({ quantityChi, totalCost }: GoldLotInput) {
+function validateGoldLot({ quantityChi, totalCost, date }: GoldLotInput) {
+  validateGoldLotDate(date);
   if (!Number.isFinite(quantityChi) || quantityChi <= 0) {
     throw new Error('Gold quantity must be greater than zero');
   }
   if (!Number.isFinite(totalCost) || totalCost < 0) {
     throw new Error('Gold cost must be a non-negative number');
+  }
+}
+
+function validateGoldLotDate(date: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    throw new Error('Gold date must be a valid YYYY-MM-DD date');
+  }
+
+  const [year, month, day] = date.split('-').map(Number);
+  const parsed = new Date(Date.UTC(year, month - 1, day));
+  if (
+    parsed.getUTCFullYear() !== year ||
+    parsed.getUTCMonth() !== month - 1 ||
+    parsed.getUTCDate() !== day
+  ) {
+    throw new Error('Gold date must be a valid YYYY-MM-DD date');
   }
 }
 
@@ -667,8 +684,7 @@ async function fetchLiveGoldPrice(): Promise<{ pricePerChi: number }> {
           prices?: Array<{ provider?: string; sell_price_per_chi?: number }>;
         };
         const prices = data.prices || [];
-        const sjcPrice =
-          prices.find(p => p.provider === 'SJC') || prices[0];
+        const sjcPrice = prices.find(p => p.provider === 'SJC') || prices[0];
         if (sjcPrice?.sell_price_per_chi) {
           console.info(
             `[GoldPrice] Server successfully fetched price from ${url}: ${sjcPrice.sell_price_per_chi} VND/chỉ`,
