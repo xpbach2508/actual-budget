@@ -43,7 +43,7 @@ export function GoldAccountPanel({ account, accounts }: GoldAccountPanelProps) {
   const { data } = useQuery<GoldLot>(
     () =>
       q('gold_lots')
-        .filter({ account_id: account.id, tombstone: 0 })
+        .filter({ account_id: account.id, tombstone: false })
         .select('*'),
     [account.id],
   );

@@ -204,7 +204,7 @@ export function Balances({
     () =>
       isGoldAccount && account
         ? q('gold_lots')
-            .filter({ account_id: account.id, tombstone: 0 })
+            .filter({ account_id: account.id, tombstone: false })
             .select('*')
         : null,
     [account?.id, isGoldAccount],
