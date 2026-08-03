@@ -106,6 +106,15 @@ export function GoldAccountPanel({ account, accounts }: GoldAccountPanelProps) {
         console.info(`[GoldPrice] Trying browser fallback fetch: ${url}`);
         const res = await fetch(url);
         if (res.ok) {
+          const contentType =
+            res.headers.get('content-type')?.toLowerCase() ?? '';
+          if (!contentType.includes('application/json')) {
+            console.warn(
+              `[GoldPrice] Skipping non-JSON response from ${url} (${contentType || 'unknown content type'})`,
+            );
+            continue;
+          }
+
           const resData = await res.json();
           const prices = resData.prices || [];
           const sjcPrice =

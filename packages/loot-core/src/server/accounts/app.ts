@@ -653,25 +653,48 @@ async function revalueGoldAccount(
   }
 }
 
+type GoldPriceResponse = {
+  prices?: Array<{ provider?: string; sell_price_per_chi?: number }>;
+};
+
+async function readGoldPriceResponse(
+  response: Response,
+): Promise<GoldPriceResponse | null> {
+  const contentType = response.headers.get('content-type')?.toLowerCase() ?? '';
+  if (!contentType.includes('application/json')) {
+    console.warn(
+      `[GoldPrice] Skipping non-JSON response (${contentType || 'unknown content type'})`,
+    );
+    return null;
+  }
+
+  try {
+    return (await response.json()) as GoldPriceResponse;
+  } catch {
+    console.warn('[GoldPrice] Skipping malformed JSON response');
+    return null;
+  }
+}
+
 async function fetchLiveGoldPrice(): Promise<{ pricePerChi: number }> {
-  const candidateUrls: string[] = [];
+  const candidateUrls: string[] = [
+    // Prefer the Docker-internal service name when Actual runs beside bank-webhook.
+    'http://bank-webhook:8000/gold/prices/latest',
+    'http://localhost:8100/gold/prices/latest',
+    'http://localhost:8000/gold/prices/latest',
+    'http://localhost:8080/gold/prices/latest',
+  ];
 
   if (typeof location !== 'undefined' && location.origin) {
-    candidateUrls.push(`${location.origin}/gold/prices/latest`);
     const protocol = location.protocol || 'http:';
     const hostname = location.hostname;
     if (hostname && hostname !== 'localhost' && hostname !== '127.0.0.1') {
       candidateUrls.push(`${protocol}//${hostname}:8100/gold/prices/latest`);
     }
+    candidateUrls.push(`${location.origin}/gold/prices/latest`);
   }
 
-  candidateUrls.push(
-    'http://bank-webhook:8000/gold/prices/latest',
-    'http://localhost:8100/gold/prices/latest',
-    'http://localhost:8000/gold/prices/latest',
-    'http://localhost:8080/gold/prices/latest',
-    '/gold/prices/latest',
-  );
+  candidateUrls.push('/gold/prices/latest');
 
   const urls = Array.from(new Set(candidateUrls));
 
@@ -680,9 +703,8 @@ async function fetchLiveGoldPrice(): Promise<{ pricePerChi: number }> {
       console.info(`[GoldPrice] Server attempting fetch from: ${url}`);
       const res = await fetch(url);
       if (res.ok) {
-        const data = (await res.json()) as {
-          prices?: Array<{ provider?: string; sell_price_per_chi?: number }>;
-        };
+        const data = await readGoldPriceResponse(res);
+        if (!data) continue;
         const prices = data.prices || [];
         const sjcPrice = prices.find(p => p.provider === 'SJC') || prices[0];
         if (sjcPrice?.sell_price_per_chi) {
