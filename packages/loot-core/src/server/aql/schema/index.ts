@@ -127,6 +127,7 @@ export const schema = {
     posts_transaction: f('boolean'),
     custom_upcoming_length: f('string'),
     tombstone: f('boolean'),
+    sort_order: f('float'),
 
     // These are special fields that are actually pulled from the
     // underlying rule
