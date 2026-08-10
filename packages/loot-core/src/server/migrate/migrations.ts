@@ -64,6 +64,36 @@ async function patchBadMigrations(db: Database) {
       newFiltersMigration,
     ]);
   }
+
+  const scheduleSortOrderMigration = 1783004650757;
+  const legacyForkMigrationIds = [
+    1800000000000, 1800000000001, 1800000000002, 1800000000003,
+    1800000000004, 1800000000005, 1800000000006, 1800000000007,
+  ];
+  const hasLegacyForkHistory = legacyForkMigrationIds.every(id =>
+    appliedIds.includes(id),
+  );
+
+  if (
+    hasLegacyForkHistory &&
+    !appliedIds.includes(scheduleSortOrderMigration)
+  ) {
+    const sortOrderColumn = sqlite.runQuery<{ name: string }>(
+      db,
+      "SELECT name FROM pragma_table_info('schedules') WHERE name = 'sort_order'",
+      [],
+      true,
+    );
+    if (sortOrderColumn.length === 0) {
+      sqlite.execQuery(
+        db,
+        'ALTER TABLE schedules ADD COLUMN sort_order REAL DEFAULT 0',
+      );
+    }
+    sqlite.runQuery(db, 'INSERT INTO __migrations__ (id) VALUES (?)', [
+      scheduleSortOrderMigration,
+    ]);
+  }
 }
 
 export async function getAppliedMigrations(db: Database): Promise<number[]> {

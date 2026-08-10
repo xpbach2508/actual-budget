@@ -54,7 +54,7 @@ describe('Migrations', () => {
       db.runQuery('INSERT INTO __migrations__ (id) VALUES (?)', [id]);
     }
 
-    await expect(migrate(db.getDatabase())).resolves.toEqual([]);
+    await expect(migrate(db.getDatabase())).resolves.toBeUndefined();
 
     expect(
       await db.first<{ name: string }>(
@@ -65,7 +65,7 @@ describe('Migrations', () => {
       scheduleSortOrderMigration,
     );
 
-    await expect(migrate(db.getDatabase())).resolves.toEqual([]);
+    await expect(migrate(db.getDatabase())).resolves.toBeUndefined();
   });
 
   test('checks if there are unknown migrations', async () => {
