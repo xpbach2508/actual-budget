@@ -3,6 +3,7 @@ import * as db from '#server/db';
 
 import {
   getAppliedMigrations,
+  getMigrationsDir,
   getMigrationList,
   getPending,
   migrate,
@@ -38,6 +39,33 @@ describe('Migrations', () => {
         }
       },
     );
+  });
+
+  test('repairs the known prior-fork history missing schedule sort order', async () => {
+    const scheduleSortOrderMigration = 1783004650757;
+    const migrationIds = (await getMigrationList(getMigrationsDir()))
+      .map(name => Number.parseInt(name, 10))
+      .filter(id => id !== scheduleSortOrderMigration);
+
+    db.runQuery(
+      'CREATE TABLE schedules (id TEXT PRIMARY KEY, rule TEXT NOT NULL)',
+    );
+    for (const id of migrationIds) {
+      db.runQuery('INSERT INTO __migrations__ (id) VALUES (?)', [id]);
+    }
+
+    await expect(migrate(db.getDatabase())).resolves.toEqual([]);
+
+    expect(
+      await db.first<{ name: string }>(
+        "SELECT name FROM pragma_table_info('schedules') WHERE name = 'sort_order'",
+      ),
+    ).toEqual({ name: 'sort_order' });
+    expect(await getAppliedMigrations(db.getDatabase())).toContain(
+      scheduleSortOrderMigration,
+    );
+
+    await expect(migrate(db.getDatabase())).resolves.toEqual([]);
   });
 
   test('checks if there are unknown migrations', async () => {
