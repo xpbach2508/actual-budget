@@ -10,8 +10,8 @@ import {
   normalizeGoldQuantity,
 } from '@actual-app/core/shared/gold';
 import {
+  getGoldPriceMetadataState,
   goldPricePreferenceKey,
-  resolveGoldPrice,
 } from '@actual-app/core/shared/gold-price-metadata';
 import { q } from '@actual-app/core/shared/query';
 import { toRelaxedNumber } from '@actual-app/core/shared/util';
@@ -69,10 +69,12 @@ export function GoldAccountPanel({ account, accounts }: GoldAccountPanelProps) {
         .select('*'),
     [account.id],
   );
-  const currentPrice = resolveGoldPrice(
+  const priceState = getGoldPriceMetadataState(
     preferences?.[0]?.value,
     account.gold_current_price_per_chi,
   );
+  const currentPrice = priceState.price ?? 0;
+  const hasCurrentQuote = priceState.price != null;
   const summary = calculateGoldSummary(lots, currentPrice);
 
   const quantityChi = normalizeGoldQuantity(
@@ -132,10 +134,20 @@ export function GoldAccountPanel({ account, accounts }: GoldAccountPanelProps) {
         </View>
         <View>
           <Text style={{ color: '#888', fontSize: 12 }}>Giá trị hiện tại</Text>
-          <strong>{formatVnd.format(summary.currentValue)}</strong>
-          {currentPrice > 0 && (
+          <strong>{hasCurrentQuote ? formatVnd.format(summary.currentValue) : '—'}</strong>
+          {hasCurrentQuote ? (
             <Text style={{ fontSize: 11, color: '#aaa', marginLeft: 4 }}>
-              ({formatVnd.format(currentPrice)}/chỉ)
+              ({formatVnd.format(currentPrice)}/chỉ){' '}
+              {priceState.source === 'synced' && priceState.metadata
+                ? `${priceState.metadata.provider} · updated ${new Date(priceState.metadata.fetched_at).toLocaleString('vi-VN')}`
+                : 'Manual price'}
+            </Text>
+          ) : (
+            <Text style={{ fontSize: 11, color: '#aaa', marginLeft: 4 }}>
+              {priceState.stale && priceState.metadata
+                ? `Last ${priceState.metadata.provider} quote is stale · `
+                : ''}
+              Market quote unavailable
             </Text>
           )}
         </View>
@@ -144,9 +156,9 @@ export function GoldAccountPanel({ account, accounts }: GoldAccountPanelProps) {
             Lãi/lỗ chưa thực hiện
           </Text>
           <strong style={{ color: glColor }}>
-            {sign}
-            {formatVnd.format(summary.gainLoss)} ({sign}
-            {summary.gainLossPercentage.toFixed(2)}%)
+            {hasCurrentQuote
+              ? `${sign}${formatVnd.format(summary.gainLoss)} (${sign}${summary.gainLossPercentage.toFixed(2)}%)`
+              : '—'}
           </strong>
         </View>
       </View>
