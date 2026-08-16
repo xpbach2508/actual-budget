@@ -7,10 +7,10 @@ describe('gold calculations', () => {
     expect(normalizeGoldQuantity(2, 'cay')).toBe(20);
   });
 
-  it('calculates cost basis, current value, and gain/loss', () => {
+  it('converts stored cent amounts before calculating cost basis and gain/loss', () => {
     expect(
       calculateGoldSummary(
-        [{ quantity_chi: 3, cost_per_chi: 7_000_000 }],
+        [{ quantity_chi: 3, cost_per_chi: 700_000_000 }],
         8_000_000,
       ),
     ).toEqual({
@@ -26,8 +26,8 @@ describe('gold calculations', () => {
     expect(
       calculateGoldSummary(
         [
-          { quantity_chi: 3, cost_per_chi: 7_000_000, tombstone: 0 },
-          { quantity_chi: 10, cost_per_chi: 9_000_000, tombstone: 1 },
+          { quantity_chi: 3, cost_per_chi: 700_000_000, tombstone: 0 },
+          { quantity_chi: 10, cost_per_chi: 900_000_000, tombstone: 1 },
         ],
         8_000_000,
       ),

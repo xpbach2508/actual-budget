@@ -19,9 +19,9 @@ describe('calculateGoldVirtualAdjustment', () => {
           { account_id: 'gold', quantity_chi: 2, tombstone: false },
           { account_id: 'gold', quantity_chi: 1, tombstone: true },
         ],
-        new Map([['gold', 14_000_000]]),
+        new Map([['gold', 1_400_000_000]]),
       ),
-    ).toBe(2_000_000);
+    ).toBe(200_000_000);
   });
 
   it.each([

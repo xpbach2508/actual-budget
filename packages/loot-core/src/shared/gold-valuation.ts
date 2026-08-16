@@ -1,3 +1,5 @@
+import { amountToInteger } from './util';
+
 type GoldAccount = {
   id: string;
   account_subtype?: string | null;
@@ -38,7 +40,9 @@ export function calculateGoldVirtualAdjustment(
       return adjustment;
     }
 
-    const marketValue = (quantityByAccount.get(account.id) ?? 0) * price;
+    const marketValue = amountToInteger(
+      (quantityByAccount.get(account.id) ?? 0) * price,
+    );
     return adjustment + marketValue - (ledgerBalances.get(account.id) ?? 0);
   }, 0);
 }

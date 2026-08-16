@@ -1,3 +1,5 @@
+import { integerToAmount } from './util';
+
 export type GoldUnit = 'chi' | 'cay';
 
 type GoldLot = {
@@ -14,15 +16,17 @@ export function calculateGoldSummary(
   lots: ReadonlyArray<GoldLot>,
   currentPricePerChi: number,
 ) {
-  const { quantityChi, costBasis } = lots
+  const { quantityChi, costBasisInteger } = lots
     .filter(lot => !lot.tombstone)
     .reduce(
       (summary, lot) => ({
         quantityChi: summary.quantityChi + lot.quantity_chi,
-        costBasis: summary.costBasis + lot.quantity_chi * lot.cost_per_chi,
+        costBasisInteger:
+          summary.costBasisInteger + lot.quantity_chi * lot.cost_per_chi,
       }),
-      { quantityChi: 0, costBasis: 0 },
+      { quantityChi: 0, costBasisInteger: 0 },
     );
+  const costBasis = integerToAmount(costBasisInteger);
   const currentValue = quantityChi * currentPricePerChi;
 
   const gainLoss = currentValue - costBasis;
