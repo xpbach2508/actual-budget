@@ -4,6 +4,15 @@ export type GoldPriceMetadata = {
   fetched_at: string;
 };
 
+export type GoldPriceMetadataState = {
+  price: number | null;
+  metadata: GoldPriceMetadata | null;
+  stale: boolean;
+  source: 'synced' | 'manual' | 'unavailable';
+};
+
+export const GOLD_PRICE_MAX_AGE_MS = 36 * 60 * 60 * 1000;
+
 export function goldPricePreferenceKey(accountId: string): string {
   return `gold-price:${accountId}`;
 }
@@ -28,11 +37,41 @@ export function parseGoldPriceMetadata(
   }
 }
 
+export function getGoldPriceMetadataState(
+  metadataValue: string | null | undefined,
+  legacyPrice: number | null | undefined,
+  now = new Date(),
+): GoldPriceMetadataState {
+  const metadata = parseGoldPriceMetadata(metadataValue);
+  if (metadata) {
+    const fetchedAt = new Date(metadata.fetched_at);
+    const stale =
+      !Number.isFinite(fetchedAt.getTime()) ||
+      now.getTime() - fetchedAt.getTime() > GOLD_PRICE_MAX_AGE_MS;
+    return {
+      price: stale ? null : metadata.price_per_chi,
+      metadata,
+      stale,
+      source: 'synced',
+    };
+  }
+  if (metadataValue != null) {
+    return { price: null, metadata: null, stale: false, source: 'unavailable' };
+  }
+  if (typeof legacyPrice === 'number' && Number.isFinite(legacyPrice) && legacyPrice > 0) {
+    return {
+      price: legacyPrice,
+      metadata: null,
+      stale: false,
+      source: 'manual',
+    };
+  }
+  return { price: null, metadata: null, stale: false, source: 'unavailable' };
+}
+
 export function resolveGoldPrice(
   metadataValue: string | null | undefined,
   legacyPrice: number | null | undefined,
 ): number {
-  return (
-    parseGoldPriceMetadata(metadataValue)?.price_per_chi ?? legacyPrice ?? 0
-  );
+  return getGoldPriceMetadataState(metadataValue, legacyPrice).price ?? 0;
 }

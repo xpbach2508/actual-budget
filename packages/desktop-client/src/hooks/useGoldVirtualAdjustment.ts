@@ -1,6 +1,6 @@
 import {
+  getGoldPriceMetadataState,
   goldPricePreferenceKey,
-  resolveGoldPrice,
 } from '@actual-app/core/shared/gold-price-metadata';
 import { calculateGoldVirtualAdjustment } from '@actual-app/core/shared/gold-valuation';
 import { q } from '@actual-app/core/shared/query';
@@ -64,10 +64,11 @@ export function useGoldVirtualAdjustment(
   return calculateGoldVirtualAdjustment(
     accounts.map(account => ({
       ...account,
-      gold_current_price_per_chi: resolveGoldPrice(
-        preferenceValues.get(goldPricePreferenceKey(account.id)),
-        account.gold_current_price_per_chi,
-      ),
+      gold_current_price_per_chi:
+        getGoldPriceMetadataState(
+          preferenceValues.get(goldPricePreferenceKey(account.id)),
+          account.gold_current_price_per_chi,
+        ).price ?? 0,
     })),
     lots ?? [],
     getGoldLedgerBalances(transactions ?? []),
