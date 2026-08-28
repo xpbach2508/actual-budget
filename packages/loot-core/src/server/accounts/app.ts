@@ -21,6 +21,7 @@ import { batchMessages } from '#server/sync';
 import { addTransfer } from '#server/transactions/transfer';
 import { undoable, withUndo } from '#server/undo';
 import { isNonProductionEnvironment } from '#shared/environment';
+import { goldPricePreferenceKey } from '#shared/gold-price-metadata';
 import { dayFromDate } from '#shared/months';
 import * as monthUtils from '#shared/months';
 import { amountToInteger } from '#shared/util';
@@ -687,35 +688,43 @@ async function purchaseGold({
   if (!payee) {
     throw new Error('Gold account transfer payee was not found');
   }
-  const sourceTransactionId = await db.insertTransaction({
-    account: sourceAccountId,
-    amount: -amountToInteger(totalCost),
-    category: null,
-    payee: payee.id,
-    date,
-    cleared: true,
+
+  let transferId: string | undefined;
+  await batchMessages(async () => {
+    const sourceTransactionId = await db.insertTransaction({
+      account: sourceAccountId,
+      amount: -amountToInteger(totalCost),
+      category: null,
+      payee: payee.id,
+      date,
+      cleared: true,
+    });
+    const sourceTransaction = await db.getTransaction(sourceTransactionId);
+    if (!sourceTransaction) {
+      throw new Error('Gold purchase transfer was not created');
+    }
+    const transfer = await addTransfer(sourceTransaction, accountId);
+    if (!transfer?.transfer_id) {
+      throw new Error('Gold purchase transfer was not linked');
+    }
+    await insertGoldLot({
+      accountId,
+      date,
+      quantityChi,
+      totalCost,
+      transferId: transfer.transfer_id,
+    });
+    transferId = transfer.transfer_id;
   });
-  const sourceTransaction = await db.getTransaction(sourceTransactionId);
-  if (!sourceTransaction) {
-    throw new Error('Gold purchase transfer was not created');
-  }
-  const transfer = await addTransfer(sourceTransaction, accountId);
-  if (!transfer?.transfer_id) {
+  if (!transferId) {
     throw new Error('Gold purchase transfer was not linked');
   }
-  await insertGoldLot({
-    accountId,
-    date,
-    quantityChi,
-    totalCost,
-    transferId: transfer.transfer_id,
-  });
   connection.send('sync-event', {
     type: 'success',
     tables: ['transactions', 'gold_lots', 'accounts'],
   });
 
-  return { transferId: transfer.transfer_id };
+  return { transferId };
 }
 
 async function addGoldManually({
@@ -726,19 +735,21 @@ async function addGoldManually({
 }: GoldLotInput) {
   await assertGoldAccount(accountId);
   validateGoldLot({ accountId, date, quantityChi, totalCost });
-  const transactionId = await db.insertTransaction({
-    account: accountId,
-    amount: amountToInteger(totalCost),
-    category: null,
-    date,
-    cleared: true,
-  });
-  await insertGoldLot({
-    accountId,
-    date,
-    quantityChi,
-    totalCost,
-    transferId: transactionId,
+  await batchMessages(async () => {
+    const transactionId = await db.insertTransaction({
+      account: accountId,
+      amount: amountToInteger(totalCost),
+      category: null,
+      date,
+      cleared: true,
+    });
+    await insertGoldLot({
+      accountId,
+      date,
+      quantityChi,
+      totalCost,
+      transferId: transactionId,
+    });
   });
   connection.send('sync-event', {
     type: 'success',
@@ -759,13 +770,23 @@ async function updateGoldPrice({
     throw new Error('Gold price must be a non-negative number');
   }
   const storedPrice = amountToInteger(pricePerChi);
-  await db.updateWithSchema('accounts', {
-    id: accountId,
-    gold_current_price_per_chi: storedPrice,
+  await batchMessages(async () => {
+    await db.updateWithSchema('accounts', {
+      id: accountId,
+      gold_current_price_per_chi: storedPrice,
+    });
+    await db.update('preferences', {
+      id: goldPricePreferenceKey(accountId),
+      value: JSON.stringify({
+        price_per_chi: pricePerChi,
+        provider: 'manual',
+        fetched_at: new Date().toISOString(),
+      }),
+    });
   });
   connection.send('sync-event', {
     type: 'success',
-    tables: ['transactions', 'gold_lots', 'accounts'],
+    tables: ['transactions', 'gold_lots', 'accounts', 'preferences'],
   });
   return {};
 }

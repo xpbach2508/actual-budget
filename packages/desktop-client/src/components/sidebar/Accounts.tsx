@@ -30,7 +30,7 @@ export function Accounts() {
   const { data: offbudgetAccounts = [] } = useOffBudgetAccounts();
   const { data: onBudgetAccounts = [] } = useOnBudgetAccounts();
   const { data: closedAccounts = [] } = useClosedAccounts();
-  const goldVirtualAdjustment = useGoldVirtualAdjustment(offbudgetAccounts);
+  const goldVirtualAdjustment = useGoldVirtualAdjustment(accounts);
   const syncingAccountIds = useSelector(state => state.account.accountsSyncing);
 
   const getAccountPath = (account: AccountEntity) => `/accounts/${account.id}`;
@@ -99,6 +99,7 @@ export function Accounts() {
           style={{ fontWeight, marginTop: 15 }}
           isExactPathMatch
           balanceTestId="sidebar-all-accounts-balance"
+          balanceAdjustment={goldVirtualAdjustment}
         />
 
         {onBudgetAccounts.length > 0 && (

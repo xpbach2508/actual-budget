@@ -1,6 +1,22 @@
 import { describe, expect, it } from 'vitest';
 
-import { getGoldLedgerBalances } from './useGoldVirtualAdjustment';
+import {
+  getGoldLedgerBalances,
+  shouldApplyGoldVirtualAdjustment,
+} from './useGoldVirtualAdjustment';
+
+describe('shouldApplyGoldVirtualAdjustment', () => {
+  it.each([
+    [undefined, true],
+    ['all', true],
+    ['offbudget', true],
+    ['onbudget', false],
+    ['closed', false],
+    ['gold-account', false],
+  ] as const)('view %s -> %s', (view, expected) => {
+    expect(shouldApplyGoldVirtualAdjustment(view)).toBe(expected);
+  });
+});
 
 describe('getGoldLedgerBalances', () => {
   it('sums ledger transactions by gold account', () => {

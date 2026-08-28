@@ -27,7 +27,7 @@ const account = {
 
 function renderPanel(preference: string | null) {
   vi.mocked(useQuery)
-    .mockReturnValueOnce({ data: [{ id: 'lot', date: '2026-08-01', quantity_chi: 1, cost_per_chi: 7_000_000 }] })
+    .mockReturnValueOnce({ data: [{ id: 'lot', date: '2026-08-01', quantity_chi: 1, cost_per_chi: 700_000_000 }] })
     .mockReturnValueOnce({ data: preference == null ? [] : [{ id: 'gold-price:gold', value: preference }] });
   return render(
     <TestProviders>

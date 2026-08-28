@@ -211,16 +211,16 @@ export function CreateLocalAccountModal() {
               </View>
 
               {offbudget && (
-                <InlineField label="Loại tài sản" width="100%">
+                <InlineField label={t('Asset type')} width="100%">
                   <Select
                     value={subtype || ''}
                     onChange={value => setSubtype(value || null)}
                     options={[
-                      ['', '(Không chọn)'],
-                      ['savings', '🏦 Tiết kiệm'],
-                      ['gold', '🪙 Vàng'],
-                      ['family', '👨‍👩‍👧 Gửi người thân'],
-                      ['investment', '📈 Đầu tư'],
+                      ['', t('(None)')],
+                      ['savings', t('Savings')],
+                      ['gold', t('Gold')],
+                      ['family', t('Family')],
+                      ['investment', t('Investment')],
                     ]}
                   />
                 </InlineField>

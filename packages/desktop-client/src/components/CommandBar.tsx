@@ -24,6 +24,7 @@ import { Command } from 'cmdk';
 
 import { useAccounts } from '#hooks/useAccounts';
 import { useDashboardPages } from '#hooks/useDashboardPages';
+import { useGoldVirtualAdjustment } from '#hooks/useGoldVirtualAdjustment';
 import { useMetadataPref } from '#hooks/useMetadataPref';
 import { useModalState } from '#hooks/useModalState';
 import { useNavigate } from '#hooks/useNavigate';
@@ -64,9 +65,11 @@ function BalanceRow<
 >({
   label,
   binding,
+  adjustment = 0,
 }: {
   label: string;
   binding: Binding<SheetName, FieldName>;
+  adjustment?: number;
 }) {
   return (
     <View
@@ -82,6 +85,7 @@ function BalanceRow<
         {props => (
           <CellValueText
             {...props}
+            value={Number(props.value) + adjustment}
             style={{ ...styles.tnum, whiteSpace: 'nowrap', opacity: 0.9 }}
           />
         )}
@@ -97,6 +101,8 @@ export function CommandBar() {
   const navigate = useNavigate();
   const [budgetName] = useMetadataPref('budgetName');
   const { modalStack } = useModalState();
+  const { data: allAccounts = [] } = useAccounts();
+  const goldVirtualAdjustment = useGoldVirtualAdjustment(allAccounts);
 
   const navigationItems = useMemo(
     () => [
@@ -125,12 +131,13 @@ export function CommandBar() {
           <BalanceRow<'account', 'accounts-balance'>
             label={t('All Accounts')}
             binding={allAccountBalance()}
+            adjustment={goldVirtualAdjustment}
           />
         ),
         Icon: SvgLibrary,
       },
     ],
-    [t],
+    [goldVirtualAdjustment, t],
   );
 
   useEffect(() => {
@@ -138,7 +145,6 @@ export function CommandBar() {
     if (!open) setSearch('');
   }, [open]);
 
-  const { data: allAccounts = [] } = useAccounts();
   const { data: customReports = [] } = useReports();
   const { data: dashboardPages = [] } = useDashboardPages();
 
@@ -201,6 +207,7 @@ export function CommandBar() {
             <BalanceRow<'account', 'offbudget-accounts-balance'>
               label={t('Off Budget')}
               binding={offBudgetAccountBalance()}
+              adjustment={goldVirtualAdjustment}
             />
           ),
           Icon: SvgLibrary,

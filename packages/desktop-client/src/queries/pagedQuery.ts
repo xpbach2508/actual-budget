@@ -84,8 +84,7 @@ export class PagedQuery<TResponse = unknown> extends LiveQuery<TResponse> {
     this._fetchDataPromise = this.fetchData(async () => {
       this._hasReachedEnd = false;
 
-      // Also fetch the total count
-      void this.fetchCount();
+      await this.fetchCount();
 
       // If data is null, we haven't fetched anything yet so just
       // fetch the first page
@@ -123,8 +122,7 @@ export class PagedQuery<TResponse = unknown> extends LiveQuery<TResponse> {
     this._fetchDataPromise = this.fetchData(async () => {
       this._hasReachedEnd = false;
 
-      // Also fetch the total count
-      void this.fetchCount();
+      await this.fetchCount();
 
       const orderDesc = getPrimaryOrderBy(this.query, defaultOrderBy);
       if (orderDesc == null) {

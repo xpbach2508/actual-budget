@@ -107,6 +107,34 @@ describe('gold-manual-add', () => {
     expect(transactions).toEqual([{ notes: null }]);
   });
 
+  it('stores the display price as integer cents and writes manual quote metadata', async () => {
+    await db.insertAccount({
+      id: 'gold-account',
+      name: 'Gold',
+      account_subtype: 'gold',
+    });
+
+    await goldUpdatePriceHandler({
+      accountId: 'gold-account',
+      pricePerChi: 8_000_000,
+    });
+
+    const account = await db.first<{ gold_current_price_per_chi: number }>(
+      'SELECT gold_current_price_per_chi FROM accounts WHERE id = ?',
+      ['gold-account'],
+    );
+    const preference = await db.first<{ value: string }>(
+      'SELECT value FROM preferences WHERE id = ?',
+      ['gold-price:gold-account'],
+    );
+
+    expect(account?.gold_current_price_per_chi).toBe(800_000_000);
+    expect(JSON.parse(preference?.value ?? '')).toMatchObject({
+      price_per_chi: 8_000_000,
+      provider: 'manual',
+    });
+  });
+
   it('rejects invalid lot dates before writing a transaction', async () => {
     await db.insertAccount({
       id: 'gold-account',

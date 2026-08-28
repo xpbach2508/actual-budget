@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
 
 import { Button } from '@actual-app/components/button';
 import { Input } from '@actual-app/components/input';
@@ -13,6 +14,7 @@ import {
   getGoldPriceMetadataState,
   goldPricePreferenceKey,
 } from '@actual-app/core/shared/gold-price-metadata';
+import * as monthUtils from '@actual-app/core/shared/months';
 import { q } from '@actual-app/core/shared/query';
 import { toRelaxedNumber } from '@actual-app/core/shared/util';
 import type { AccountEntity } from '@actual-app/core/types/models';
@@ -43,6 +45,7 @@ type GoldAccountPanelProps = {
 };
 
 export function GoldAccountPanel({ account, accounts }: GoldAccountPanelProps) {
+  const { t } = useTranslation();
   const { data } = useQuery<GoldLot>(
     () =>
       q('gold_lots')
@@ -94,7 +97,7 @@ export function GoldAccountPanel({ account, accounts }: GoldAccountPanelProps) {
     if (quantityChi <= 0 || cost < 0) return;
     manualAdd.mutate({
       accountId: account.id,
-      date: new Date().toISOString().slice(0, 10),
+      date: monthUtils.currentDay(),
       quantityChi,
       totalCost: cost,
     });
@@ -105,7 +108,7 @@ export function GoldAccountPanel({ account, accounts }: GoldAccountPanelProps) {
     purchase.mutate({
       accountId: account.id,
       sourceAccountId,
-      date: new Date().toISOString().slice(0, 10),
+      date: monthUtils.currentDay(),
       quantityChi,
       totalCost: cost,
     });
@@ -125,35 +128,50 @@ export function GoldAccountPanel({ account, accounts }: GoldAccountPanelProps) {
     <View style={{ gap: 10, margin: '0 15px 12px' }}>
       <View style={{ flexDirection: 'row', gap: 24, flexWrap: 'wrap' }}>
         <View>
-          <Text style={{ color: '#888', fontSize: 12 }}>Tổng vàng</Text>
-          <strong>{summary.quantityChi} chỉ</strong>
+          <Text style={{ color: '#888', fontSize: 12 }}>
+            <Trans>Total gold</Trans>
+          </Text>
+          <strong>
+            {t('{{quantity}} chi', { quantity: summary.quantityChi })}
+          </strong>
         </View>
         <View>
-          <Text style={{ color: '#888', fontSize: 12 }}>Tổng vốn đầu tư</Text>
+          <Text style={{ color: '#888', fontSize: 12 }}>
+            <Trans>Cost basis</Trans>
+          </Text>
           <strong>{formatVnd.format(summary.costBasis)}</strong>
         </View>
         <View>
-          <Text style={{ color: '#888', fontSize: 12 }}>Giá trị hiện tại</Text>
+          <Text style={{ color: '#888', fontSize: 12 }}>
+            <Trans>Current value</Trans>
+          </Text>
           <strong>{hasCurrentQuote ? formatVnd.format(summary.currentValue) : '—'}</strong>
           {hasCurrentQuote ? (
             <Text style={{ fontSize: 11, color: '#aaa', marginLeft: 4 }}>
-              ({formatVnd.format(currentPrice)}/chỉ){' '}
+              ({formatVnd.format(currentPrice)}/{t('chi')}){' '}
               {priceState.source === 'synced' && priceState.metadata
-                ? `${priceState.metadata.provider} · updated ${new Date(priceState.metadata.fetched_at).toLocaleString('vi-VN')}`
-                : 'Manual price'}
+                ? t('{{provider}} · updated {{when}}', {
+                    provider: priceState.metadata.provider,
+                    when: new Date(
+                      priceState.metadata.fetched_at,
+                    ).toLocaleString(),
+                  })
+                : t('Manual price')}
             </Text>
           ) : (
             <Text style={{ fontSize: 11, color: '#aaa', marginLeft: 4 }}>
               {priceState.stale && priceState.metadata
-                ? `Last ${priceState.metadata.provider} quote is stale · `
+                ? t('Last {{provider}} quote is stale · ', {
+                    provider: priceState.metadata.provider,
+                  })
                 : ''}
-              Market quote unavailable
+              <Trans>Market quote unavailable</Trans>
             </Text>
           )}
         </View>
         <View>
           <Text style={{ color: '#888', fontSize: 12 }}>
-            Lãi/lỗ chưa thực hiện
+            <Trans>Unrealized gain/loss</Trans>
           </Text>
           <strong style={{ color: glColor }}>
             {hasCurrentQuote
@@ -163,9 +181,15 @@ export function GoldAccountPanel({ account, accounts }: GoldAccountPanelProps) {
         </View>
       </View>
       <View style={{ flexDirection: 'row', gap: 8 }}>
-        <Button onPress={() => setMode('purchase')}>Mua vàng</Button>
-        <Button onPress={() => setMode('manual')}>Thêm vàng thủ công</Button>
-        <Button onPress={() => setMode('price')}>Cập nhật giá vàng</Button>
+        <Button onPress={() => setMode('purchase')}>
+          <Trans>Buy gold</Trans>
+        </Button>
+        <Button onPress={() => setMode('manual')}>
+          <Trans>Add gold manually</Trans>
+        </Button>
+        <Button onPress={() => setMode('price')}>
+          <Trans>Update gold price</Trans>
+        </Button>
       </View>
       {(mode === 'manual' || mode === 'purchase') && (
         <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -181,26 +205,28 @@ export function GoldAccountPanel({ account, accounts }: GoldAccountPanelProps) {
           <Input
             value={quantity}
             inputMode="decimal"
-            placeholder="Số lượng"
+            placeholder={t('Quantity')}
             onChangeValue={setQuantity}
           />
           <Select
             value={unit}
             onChange={value => setUnit(value as 'chi' | 'cay')}
             options={[
-              ['chi', 'Chỉ'],
-              ['cay', 'Cây'],
+              ['chi', t('Chi')],
+              ['cay', t('Cay')],
             ]}
           />
           <Input
             value={totalCost}
             inputMode="decimal"
-            placeholder="Tổng tiền mua"
+            placeholder={t('Total purchase cost')}
             onChangeValue={setTotalCost}
           />
-          <Button onPress={mode === 'purchase' ? buy : addManual}>Lưu</Button>
+          <Button onPress={mode === 'purchase' ? buy : addManual}>
+            <Trans>Save</Trans>
+          </Button>
           <Button variant="bare" onPress={reset}>
-            Hủy
+            <Trans>Cancel</Trans>
           </Button>
         </View>
       )}
@@ -209,12 +235,14 @@ export function GoldAccountPanel({ account, accounts }: GoldAccountPanelProps) {
           <Input
             value={price}
             inputMode="decimal"
-            placeholder="Giá VND/chỉ"
+            placeholder={t('Price VND/chi')}
             onChangeValue={setPrice}
           />
-          <Button onPress={savePrice}>Lưu giá</Button>
+          <Button onPress={savePrice}>
+            <Trans>Save price</Trans>
+          </Button>
           <Button variant="bare" onPress={reset}>
-            Hủy
+            <Trans>Cancel</Trans>
           </Button>
         </View>
       )}

@@ -21,6 +21,7 @@ describe('usePagedQuery', () => {
     vi.mocked(pagedQuery).mockReturnValue({
       data: [{ id: 'first' }],
       hasNext: true,
+      totalCount: 73,
       fetchNext,
       unsubscribe: vi.fn(),
     } as never);
@@ -34,6 +35,7 @@ describe('usePagedQuery', () => {
       query,
       expect.objectContaining({ options: { pageCount: 50 } }),
     );
+    expect(result.current.totalCount).toBe(73);
 
     await act(() => result.current.fetchNext());
 
@@ -45,6 +47,7 @@ describe('usePagedQuery', () => {
     vi.mocked(pagedQuery).mockReturnValue({
       data: [],
       hasNext: false,
+      totalCount: 0,
       fetchNext: vi.fn(),
       unsubscribe,
     } as never);

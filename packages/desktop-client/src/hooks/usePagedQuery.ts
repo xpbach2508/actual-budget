@@ -17,15 +17,18 @@ export function usePagedQuery<T>(
   const [data, setData] = useState<ReadonlyArray<T> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasNext, setHasNext] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
     setData(null);
     setIsLoading(true);
+    setTotalCount(0);
 
     const next = pagedQuery<T>(query, {
       onData: data => {
         setData(data);
         setHasNext(next.hasNext);
+        setTotalCount(next.totalCount ?? 0);
         setIsLoading(false);
       },
       onError: () => setIsLoading(false),
@@ -33,6 +36,7 @@ export function usePagedQuery<T>(
     });
     paged.current = next;
     setHasNext(next.hasNext);
+    setTotalCount(next.totalCount ?? 0);
 
     return () => {
       next.unsubscribe();
@@ -45,7 +49,8 @@ export function usePagedQuery<T>(
   const fetchNext = useCallback(async () => {
     await paged.current?.fetchNext();
     setHasNext(paged.current?.hasNext ?? false);
+    setTotalCount(paged.current?.totalCount ?? 0);
   }, []);
 
-  return { data, isLoading, hasNext, fetchNext };
+  return { data, isLoading, hasNext, totalCount, fetchNext };
 }

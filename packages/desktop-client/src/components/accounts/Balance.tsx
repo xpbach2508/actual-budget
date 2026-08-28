@@ -18,8 +18,13 @@ import { useHover } from 'usehooks-ts';
 import { FinancialText } from '#components/FinancialText';
 import { PrivacyFilter } from '#components/PrivacyFilter';
 import { CellValue, CellValueText } from '#components/spreadsheet/CellValue';
+import { useAccounts } from '#hooks/useAccounts';
 import { useCachedSchedules } from '#hooks/useCachedSchedules';
 import { useFormat } from '#hooks/useFormat';
+import {
+  shouldApplyGoldVirtualAdjustment,
+  useGoldVirtualAdjustment,
+} from '#hooks/useGoldVirtualAdjustment';
 import { useQuery } from '#hooks/useQuery';
 import { useSelectedItems } from '#hooks/useSelected';
 import { useSheetValue } from '#hooks/useSheetValue';
@@ -183,6 +188,7 @@ type BalancesProps = {
   showExtraBalances: boolean;
   onToggleExtraBalances: () => void;
   account?: AccountEntity;
+  accountId?: string;
   isFiltered: boolean;
   filteredAmount?: number | null;
 };
@@ -192,10 +198,16 @@ export function Balances({
   showExtraBalances,
   onToggleExtraBalances,
   account,
+  accountId,
   isFiltered,
   filteredAmount,
 }: BalancesProps) {
   const selectedItems = useSelectedItems();
+  const { data: accounts = [] } = useAccounts();
+  const goldVirtualAdjustment = useGoldVirtualAdjustment(accounts);
+  const displayedBalanceAdjustment = shouldApplyGoldVirtualAdjustment(accountId)
+    ? goldVirtualAdjustment
+    : 0;
   const isGoldAccount = account?.account_subtype === 'gold';
   const { data: goldLots } = useQuery<{
     quantity_chi: number;
@@ -257,6 +269,7 @@ export function Balances({
             {props => (
               <CellValueText
                 {...props}
+                value={Number(props.value) + displayedBalanceAdjustment}
                 style={{
                   fontSize: 22,
                   fontWeight: 400,

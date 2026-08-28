@@ -32,6 +32,10 @@ import { PullToRefresh } from '#components/mobile/PullToRefresh';
 import { MobilePageHeader, Page } from '#components/Page';
 import { CellValue, CellValueText } from '#components/spreadsheet/CellValue';
 import { useAccounts } from '#hooks/useAccounts';
+import {
+  shouldApplyGoldVirtualAdjustment,
+  useGoldVirtualAdjustment,
+} from '#hooks/useGoldVirtualAdjustment';
 import { useLocalPref } from '#hooks/useLocalPref';
 import { useNavigate } from '#hooks/useNavigate';
 import { useSyncedPref } from '#hooks/useSyncedPref';
@@ -46,6 +50,7 @@ type AccountHeaderProps<SheetFieldName extends SheetFields<'account'>> = {
   id: string;
   name: string;
   amount: Binding<'account', SheetFieldName>;
+  adjustment?: number;
   style?: CSSProperties;
   showCheveronDown?: boolean;
   onPress?: () => void;
@@ -55,6 +60,7 @@ function AccountHeader<SheetFieldName extends SheetFields<'account'>>({
   id,
   name,
   amount,
+  adjustment = 0,
   style = {},
   showCheveronDown = false,
   onPress,
@@ -110,6 +116,7 @@ function AccountHeader<SheetFieldName extends SheetFields<'account'>>({
         {props => (
           <CellValueText<'account', SheetFieldName>
             {...props}
+            value={Number(props.value) + adjustment}
             style={{ ...styles.text }}
           />
         )}
@@ -308,6 +315,7 @@ function AllAccountList({
   onSync,
 }: AllAccountListProps) {
   const { t } = useTranslation();
+  const goldVirtualAdjustment = useGoldVirtualAdjustment(accounts);
   const onBudgetAccounts = accounts.filter(
     account => account.offbudget === 0 && account.closed === 0,
   );
@@ -366,6 +374,11 @@ function AllAccountList({
               id="all"
               name={t('All accounts')}
               amount={getAllAccountsBalance()}
+              adjustment={
+                shouldApplyGoldVirtualAdjustment('all')
+                  ? goldVirtualAdjustment
+                  : 0
+              }
             />
             {onBudgetAccounts.length > 0 && (
               <AccountHeader
@@ -385,6 +398,11 @@ function AllAccountList({
                 id="offbudget"
                 name={t('Off budget')}
                 amount={getOffBudgetBalance()}
+                adjustment={
+                  shouldApplyGoldVirtualAdjustment('offbudget')
+                    ? goldVirtualAdjustment
+                    : 0
+                }
               />
             )}
             <AccountList

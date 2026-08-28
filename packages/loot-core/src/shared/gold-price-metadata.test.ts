@@ -25,21 +25,45 @@ describe('getGoldPriceMetadataState', () => {
       stale: false,
       source: 'synced',
     });
-    expect(getGoldPriceMetadataState(metadata(fetchedAt), 7_800_000, staleNow)).toMatchObject({
-      price: null,
+    expect(
+      getGoldPriceMetadataState(metadata(fetchedAt), 780_000_000, staleNow),
+    ).toMatchObject({
+      price: 7_800_000,
       stale: true,
-      source: 'synced',
+      source: 'manual',
     });
   });
 
-  it('uses a positive legacy price only when synced metadata is absent', () => {
-    expect(getGoldPriceMetadataState(null, 7_900_000)).toMatchObject({
+  it('converts stored integer cents on the legacy account price to a display amount', () => {
+    expect(getGoldPriceMetadataState(null, 790_000_000)).toMatchObject({
       price: 7_900_000,
       metadata: null,
       stale: false,
       source: 'manual',
     });
-    expect(getGoldPriceMetadataState('{not-json', 7_900_000)).toMatchObject({
+  });
+
+  it('keeps a manual metadata quote from going stale', () => {
+    const fetchedAt = '2020-01-01T00:00:00.000Z';
+    expect(
+      getGoldPriceMetadataState(
+        JSON.stringify({
+          price_per_chi: 8_000_000,
+          provider: 'manual',
+          fetched_at: fetchedAt,
+        }),
+        790_000_000,
+        new Date('2026-08-14T09:00:00.000Z'),
+      ),
+    ).toMatchObject({
+      price: 8_000_000,
+      stale: false,
+      source: 'manual',
+    });
+  });
+
+  it('uses a positive legacy price only when synced metadata is absent', () => {
+    expect(getGoldPriceMetadataState('{not-json', 790_000_000)).toMatchObject({
       price: null,
       metadata: null,
       stale: false,

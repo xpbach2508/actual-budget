@@ -55,6 +55,7 @@ export function ReviewQueue() {
     data: transactions,
     isLoading,
     hasNext,
+    totalCount,
     fetchNext,
   } = usePagedQuery<TransactionEntity>(reviewQuery, reviewPageOptions);
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -280,7 +281,7 @@ export function ReviewQueue() {
         <View style={{ alignItems: 'center', flexDirection: 'row', gap: 8 }}>
           <SvgInboxCheck width={18} height={18} />
           <Text style={{ fontSize: 16, fontWeight: 600 }}>
-            <Trans>Transactions to review</Trans> ({transactions?.length ?? 0})
+            <Trans>Transactions to review</Trans> ({totalCount})
           </Text>
         </View>
 

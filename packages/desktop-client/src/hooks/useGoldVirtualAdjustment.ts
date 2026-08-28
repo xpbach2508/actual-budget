@@ -24,6 +24,12 @@ type Preference = {
   value: string | null;
 };
 
+export function shouldApplyGoldVirtualAdjustment(
+  view?: string | null,
+): boolean {
+  return view == null || view === 'all' || view === 'offbudget';
+}
+
 export function getGoldLedgerBalances(
   transactions: readonly TransactionAmount[],
 ): ReadonlyMap<string, number> {

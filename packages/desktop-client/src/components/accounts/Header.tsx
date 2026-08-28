@@ -332,6 +332,7 @@ export function AccountHeader({
               showExtraBalances={showExtraBalances}
               onToggleExtraBalances={onToggleExtraBalances}
               account={account}
+              accountId={accountId}
               isFiltered={isFiltered}
               filteredAmount={filteredAmount}
             />
