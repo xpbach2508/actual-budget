@@ -3,7 +3,11 @@ import userEvent from '@testing-library/user-event';
 import { addMonths, format } from 'date-fns';
 import { describe, expect, it, vi } from 'vitest';
 
-import { MonthPicker } from './MonthPicker';
+import {
+  applyMonthFilterChange,
+  MonthPicker,
+  parseYearMonth,
+} from './MonthPicker';
 
 const now = new Date();
 const currentMonthValue = format(now, 'yyyy-MM');
@@ -99,5 +103,88 @@ describe('MonthPicker', () => {
       }),
     ).toBeVisible();
     expect(screen.getByRole('button', { name: 'Năm trước' })).toBeDisabled();
+  });
+
+  it('parses yyyy-MM as the first of the month so the 31st does not overflow', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 0, 31));
+
+    expect(format(parseYearMonth('2026-02'), 'yyyy-MM')).toBe('2026-02');
+    expect(parseYearMonth('2026-02').getMonth()).toBe(1);
+
+    vi.useRealTimers();
+  });
+});
+
+describe('applyMonthFilterChange', () => {
+  const activeFilter = {
+    field: 'date',
+    op: 'is',
+    value: '2026-01',
+    options: { month: true },
+  } as const;
+
+  it('updates an existing month filter instead of delete-then-add', () => {
+    const onApplyFilter = vi.fn();
+    const onUpdateFilter = vi.fn();
+    const onDeleteFilter = vi.fn();
+
+    applyMonthFilterChange({
+      value: '2026-02',
+      activeFilter,
+      onApplyFilter,
+      onUpdateFilter,
+      onDeleteFilter,
+    });
+
+    expect(onDeleteFilter).not.toHaveBeenCalled();
+    expect(onApplyFilter).not.toHaveBeenCalled();
+    expect(onUpdateFilter).toHaveBeenCalledWith(
+      activeFilter,
+      expect.objectContaining({
+        field: 'date',
+        op: 'is',
+        value: '2026-02',
+        options: { month: true },
+      }),
+    );
+  });
+
+  it('applies a month filter when none exists', () => {
+    const onApplyFilter = vi.fn();
+    const onUpdateFilter = vi.fn();
+    const onDeleteFilter = vi.fn();
+
+    applyMonthFilterChange({
+      value: '2026-02',
+      activeFilter: undefined,
+      onApplyFilter,
+      onUpdateFilter,
+      onDeleteFilter,
+    });
+
+    expect(onDeleteFilter).not.toHaveBeenCalled();
+    expect(onUpdateFilter).not.toHaveBeenCalled();
+    expect(onApplyFilter).toHaveBeenCalledWith(
+      expect.objectContaining({ value: '2026-02', options: { month: true } }),
+    );
+  });
+
+  it('deletes the month filter only when clearing to Tất cả', () => {
+    const onApplyFilter = vi.fn();
+    const onUpdateFilter = vi.fn();
+    const onDeleteFilter = vi.fn();
+
+    applyMonthFilterChange({
+      value: null,
+      activeFilter,
+      onApplyFilter,
+      onUpdateFilter,
+      onDeleteFilter,
+    });
+
+    expect(onDeleteFilter).toHaveBeenCalledWith(activeFilter);
+    expect(onApplyFilter).not.toHaveBeenCalled();
+    expect(onUpdateFilter).not.toHaveBeenCalled();
   });
 });

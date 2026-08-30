@@ -42,6 +42,49 @@ export function getGoldLedgerBalances(
   }, new Map<string, number>());
 }
 
+type GoldAdjustmentAccount = {
+  id: string;
+  account_subtype?: string | null;
+  closed: boolean | number;
+  exclude_from_totals?: boolean | number | null;
+  gold_current_price_per_chi?: number | null;
+};
+
+export function goldVirtualAdjustmentOrZero({
+  accounts,
+  lots,
+  transactions,
+  preferences,
+}: {
+  accounts: readonly GoldAdjustmentAccount[];
+  lots: readonly GoldLot[] | null;
+  transactions: readonly TransactionAmount[] | null;
+  preferences: readonly Preference[] | null;
+}): number {
+  if (lots == null || transactions == null) {
+    return 0;
+  }
+
+  const preferenceValues = new Map(
+    (preferences ?? []).map(preference => [preference.id, preference.value]),
+  );
+
+  return calculateGoldVirtualAdjustment(
+    accounts.map(account => ({
+      ...account,
+      gold_current_price_per_chi:
+        preferences == null
+          ? 0
+          : (getGoldPriceMetadataState(
+              preferenceValues.get(goldPricePreferenceKey(account.id)),
+              account.gold_current_price_per_chi,
+            ).price ?? 0),
+    })),
+    lots,
+    getGoldLedgerBalances(transactions),
+  );
+}
+
 export function useGoldVirtualAdjustment(
   accounts: readonly AccountEntity[],
 ): number {
@@ -63,20 +106,11 @@ export function useGoldVirtualAdjustment(
     () => q('preferences').select(['id', 'value']),
     [],
   );
-  const preferenceValues = new Map(
-    (preferences ?? []).map(preference => [preference.id, preference.value]),
-  );
 
-  return calculateGoldVirtualAdjustment(
-    accounts.map(account => ({
-      ...account,
-      gold_current_price_per_chi:
-        getGoldPriceMetadataState(
-          preferenceValues.get(goldPricePreferenceKey(account.id)),
-          account.gold_current_price_per_chi,
-        ).price ?? 0,
-    })),
-    lots ?? [],
-    getGoldLedgerBalances(transactions ?? []),
-  );
+  return goldVirtualAdjustmentOrZero({
+    accounts,
+    lots,
+    transactions,
+    preferences,
+  });
 }

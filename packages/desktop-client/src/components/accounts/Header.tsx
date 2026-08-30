@@ -40,7 +40,10 @@ import { AnimatedRefresh } from '#components/AnimatedRefresh';
 import { Search } from '#components/common/Search';
 import { FilterButton } from '#components/filters/FiltersMenu';
 import { FiltersStack } from '#components/filters/FiltersStack';
-import { MonthPicker } from '#components/filters/MonthPicker';
+import {
+  applyMonthFilterChange,
+  MonthPicker,
+} from '#components/filters/MonthPicker';
 import type { SavedFilter } from '#components/filters/SavedFilterMenuButton';
 import { NotesButton } from '#components/NotesButton';
 import { SelectedTransactionsButton } from '#components/transactions/SelectedTransactionsButton';
@@ -399,22 +402,17 @@ export function AccountHeader({
                   f => f.field === 'date' && f.options?.month,
                 )?.value as string) || null
               }
-              onApplyMonthFilter={value => {
-                const activeFilter = filterConditions?.find(
-                  f => f.field === 'date' && f.options?.month,
-                );
-                if (activeFilter) {
-                  onDeleteFilter(activeFilter);
-                }
-                if (value) {
-                  onApplyFilter({
-                    field: 'date',
-                    op: 'is',
-                    value,
-                    options: { month: true },
-                  } as RuleConditionEntity);
-                }
-              }}
+              onApplyMonthFilter={value =>
+                applyMonthFilterChange({
+                  value,
+                  activeFilter: filterConditions?.find(
+                    f => f.field === 'date' && f.options?.month,
+                  ),
+                  onApplyFilter,
+                  onUpdateFilter,
+                  onDeleteFilter,
+                })
+              }
             />
             {/* @ts-expect-error fix me */}
             <FilterButton onApply={onApplyFilter} />

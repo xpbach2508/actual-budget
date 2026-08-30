@@ -86,6 +86,7 @@ type TransactionListWithBalancesProps = {
   showMakeTransfer?: boolean;
   isReconciling?: boolean;
   onToggleTransactionCleared?: (transaction: TransactionEntity) => void;
+  balanceAdjustment?: number;
 };
 
 export function TransactionListWithBalances({
@@ -105,6 +106,7 @@ export function TransactionListWithBalances({
   showMakeTransfer = false,
   isReconciling = false,
   onToggleTransactionCleared,
+  balanceAdjustment = 0,
 }: TransactionListWithBalancesProps) {
   const selectedInst = useSelected('transactions', [...transactions], []);
 
@@ -129,9 +131,13 @@ export function TransactionListWithBalances({
                 balanceCleared={balanceCleared}
                 balanceUncleared={balanceUncleared}
                 alwaysShowCleared={isReconciling}
+                balanceAdjustment={balanceAdjustment}
               />
             ) : (
-              <Balance balance={balance} />
+              <Balance
+                balance={balance}
+                balanceAdjustment={balanceAdjustment}
+              />
             )}
           </View>
           <TransactionSearchInput
@@ -188,6 +194,7 @@ type BalanceWithClearedProps = {
   >;
   balance: TransactionListWithBalancesProps['balance'];
   alwaysShowCleared?: boolean;
+  balanceAdjustment?: number;
 };
 
 function BalanceWithCleared({
@@ -195,6 +202,7 @@ function BalanceWithCleared({
   balanceCleared,
   balance,
   alwaysShowCleared = false,
+  balanceAdjustment = 0,
 }: BalanceWithClearedProps) {
   const { t } = useTranslation();
   const unclearedAmount = useSheetValue<
@@ -232,7 +240,7 @@ function BalanceWithCleared({
           )}
         </TransactionListBalanceCellValue>
       </View>
-      <Balance balance={balance} />
+      <Balance balance={balance} balanceAdjustment={balanceAdjustment} />
       <View
         style={{
           display: !showCleared ? 'none' : undefined,
@@ -266,9 +274,10 @@ function BalanceWithCleared({
 
 type BalanceProps = {
   balance: TransactionListWithBalancesProps['balance'];
+  balanceAdjustment?: number;
 };
 
-function Balance({ balance }: BalanceProps) {
+function Balance({ balance, balanceAdjustment = 0 }: BalanceProps) {
   const { t } = useTranslation();
   return (
     <View style={{ flexBasis: '33%' }}>
@@ -277,6 +286,7 @@ function Balance({ balance }: BalanceProps) {
         {props => (
           <CellValueText
             {...props}
+            value={Number(props.value) + balanceAdjustment}
             style={{
               fontSize: 18,
               textAlign: 'center',

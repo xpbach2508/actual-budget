@@ -218,4 +218,106 @@ describe('Transfer', () => {
     expect(child.transfer_id).not.toBe(parent.transfer_id);
     expect(child.payee).toBe(transferOne.id);
   });
+
+  test('copies cleared from the source transaction onto the counterpart', async () => {
+    await prepareDatabase();
+    const transferTwo = await db.first<db.DbPayee>(
+      "SELECT * FROM payees WHERE transfer_acct = 'two'",
+    );
+
+    const clearedId = await db.insertTransaction({
+      account: 'one',
+      amount: 5000,
+      payee: transferTwo.id,
+      date: '2017-01-01',
+      cleared: true,
+    });
+    await transfer.onInsert(await db.getTransaction(clearedId));
+    const linkedCleared = await db.getTransaction(clearedId);
+    const clearedCounterpart = await db.getTransaction(
+      linkedCleared.transfer_id,
+    );
+    expect(Boolean(clearedCounterpart.cleared)).toBe(true);
+
+    const unclearedId = await db.insertTransaction({
+      account: 'one',
+      amount: 3000,
+      payee: transferTwo.id,
+      date: '2017-01-01',
+      cleared: false,
+    });
+    await transfer.onInsert(await db.getTransaction(unclearedId));
+    const linkedUncleared = await db.getTransaction(unclearedId);
+    const unclearedCounterpart = await db.getTransaction(
+      linkedUncleared.transfer_id,
+    );
+    expect(Boolean(unclearedCounterpart.cleared)).toBe(false);
+  });
+
+  test('tombstones gold lots linked to a deleted gold-side or source transfer', async () => {
+    await prepareDatabase();
+    const transferTwo = await db.first<db.DbPayee>(
+      "SELECT * FROM payees WHERE transfer_acct = 'two'",
+    );
+
+    const sourceId = await db.insertTransaction({
+      account: 'one',
+      amount: -5000,
+      payee: transferTwo.id,
+      date: '2017-01-01',
+      cleared: true,
+    });
+    const source = await db.getTransaction(sourceId);
+    await transfer.onInsert(source);
+    const linked = await db.getTransaction(sourceId);
+
+    await db.insertWithSchema('gold_lots', {
+      account_id: 'two',
+      date: '2017-01-01',
+      quantity_chi: 1,
+      cost_per_chi: 5000,
+      transfer_id: linked.transfer_id,
+      tombstone: 0,
+    });
+
+    await transfer.onDelete(linked);
+
+    const lot = await db.first<{ tombstone: number }>(
+      'SELECT tombstone FROM gold_lots WHERE account_id = ?',
+      ['two'],
+    );
+    expect(lot?.tombstone).toBe(1);
+  });
+
+  test('tombstones gold lots whose transfer_id is the deleted transaction id', async () => {
+    await prepareDatabase();
+    const transactionId = await db.insertTransaction({
+      account: 'one',
+      amount: 5000,
+      date: '2017-01-01',
+      cleared: true,
+    });
+
+    await db.insertWithSchema('gold_lots', {
+      account_id: 'one',
+      date: '2017-01-01',
+      quantity_chi: 1.5,
+      cost_per_chi: 5000,
+      transfer_id: transactionId,
+      tombstone: 0,
+    });
+
+    await transfer.onDelete({
+      id: transactionId,
+      account: 'one',
+      amount: 5000,
+      date: '2017-01-01',
+    });
+
+    const lot = await db.first<{ tombstone: number }>(
+      'SELECT tombstone FROM gold_lots WHERE transfer_id = ?',
+      [transactionId],
+    );
+    expect(lot?.tombstone).toBe(1);
+  });
 });

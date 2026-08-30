@@ -66,7 +66,7 @@ export async function addTransfer(transaction, transferredAccount) {
     transfer_id: transaction.id,
     notes: transaction.notes || null,
     schedule: transaction.schedule,
-    cleared: false,
+    cleared: transaction.cleared,
   };
   const { notes, cleared, schedule } = await runRules(transferTransaction);
   const matchedSchedule = schedule ?? transaction.schedule;
@@ -145,10 +145,26 @@ export async function onInsert(transaction) {
   }
 }
 
+async function tombstoneGoldLotsForTransaction(transaction) {
+  const ids = [transaction.id, transaction.transfer_id].filter(Boolean);
+  if (ids.length === 0) {
+    return;
+  }
+
+  const lots = await db.all<{ id: string }>(
+    `SELECT id FROM gold_lots WHERE tombstone = 0 AND (${ids
+      .map(() => 'transfer_id = ?')
+      .join(' OR ')})`,
+    ids,
+  );
+  await Promise.all(lots.map(lot => db.delete_('gold_lots', lot.id)));
+}
+
 export async function onDelete(transaction) {
   if (transaction.transfer_id) {
     await removeTransfer(transaction);
   }
+  await tombstoneGoldLotsForTransaction(transaction);
 }
 
 export async function onUpdate(transaction) {

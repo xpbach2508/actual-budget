@@ -34,15 +34,20 @@ import { useIsInViewport } from '#hooks/useIsInViewport';
 import { usePagedQuery } from '#hooks/usePagedQuery';
 import { usePayeesById } from '#hooks/usePayees';
 import { addNotification } from '#notifications/notificationsSlice';
+import { aqlQuery } from '#queries/aqlQuery';
 import { useDispatch } from '#redux';
 
-import { buildQuickAddTransaction } from './reviewQueueUtils';
+import {
+  buildQuickAddTransaction,
+  convertReviewTransactionToTransfer,
+  transferPayeesForReview,
+} from './reviewQueueUtils';
 
 const reviewPageOptions = { pageCount: 50 };
 
 export function makeReviewQuery() {
   return q('transactions')
-    .filter({ cleared: false })
+    .filter({ cleared: false, transfer_id: null })
     .orderBy({ date: 'desc' })
     .select('*');
 }
@@ -91,11 +96,8 @@ export function ReviewQueue() {
     () => (accounts ?? []).map(account => [account.id, account.name] as const),
     [accounts],
   );
-  const transferOptions = useMemo(
-    () =>
-      Object.values(payeesById ?? {})
-        .filter(payee => payee.transfer_acct)
-        .map(payee => [payee.id, payee.name] as const),
+  const payees = useMemo(
+    () => Object.values(payeesById ?? {}),
     [payeesById],
   );
 
@@ -177,6 +179,53 @@ export function ReviewQueue() {
       setPendingIds(current => {
         const next = new Set(current);
         next.delete(id);
+        return next;
+      });
+    }
+  }
+
+  async function convertToTransfer(
+    transaction: TransactionEntity,
+    payeeId: string,
+  ) {
+    const targetAccountId = payees.find(
+      payee => payee.id === payeeId,
+    )?.transfer_acct;
+    if (!payeeId || !targetAccountId) {
+      return;
+    }
+
+    setRowErrors(current => ({ ...current, [transaction.id]: '' }));
+    setPendingIds(current => new Set(current).add(transaction.id));
+    try {
+      const { data: candidates }: { data: TransactionEntity[] } = await aqlQuery(
+        q('transactions')
+          .filter({
+            account: targetAccountId,
+            transfer_id: null,
+            cleared: false,
+            amount: -transaction.amount,
+          })
+          .select('*'),
+      );
+      const payload = convertReviewTransactionToTransfer({
+        transaction,
+        payeeId,
+        payees,
+        candidates,
+      });
+      await send('transactions-batch-update', payload);
+    } catch {
+      setRowErrors(current => ({
+        ...current,
+        [transaction.id]: t(
+          'Unable to update the transaction. Please try again.',
+        ),
+      }));
+    } finally {
+      setPendingIds(current => {
+        const next = new Set(current);
+        next.delete(transaction.id);
         return next;
       });
     }
@@ -396,10 +445,13 @@ export function ReviewQueue() {
                     >
                       <SvgArrowsSynchronize width={15} height={15} />
                       <Select
-                        options={transferOptions}
+                        options={transferPayeesForReview(
+                          payees,
+                          transaction.account,
+                        ).map(payee => [payee.id, payee.name] as const)}
                         value={transaction.payee ?? ''}
                         onChange={payee =>
-                          void updateRow(transaction.id, { payee })
+                          void convertToTransfer(transaction, payee)
                         }
                         defaultLabel={t('Transfer')}
                         disabled={isPending}

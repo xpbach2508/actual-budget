@@ -82,15 +82,6 @@ export function getGoldPriceMetadataState(
       };
     }
 
-    if (manualPrice != null) {
-      return {
-        price: manualPrice,
-        metadata,
-        stale: true,
-        source: 'manual',
-      };
-    }
-
     return {
       price: null,
       metadata,

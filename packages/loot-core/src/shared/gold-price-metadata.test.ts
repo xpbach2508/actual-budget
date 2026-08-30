@@ -28,9 +28,26 @@ describe('getGoldPriceMetadataState', () => {
     expect(
       getGoldPriceMetadataState(metadata(fetchedAt), 780_000_000, staleNow),
     ).toMatchObject({
-      price: 7_800_000,
+      price: null,
       stale: true,
-      source: 'manual',
+      source: 'synced',
+    });
+  });
+
+  it('returns a null synced price when fetched_at is unparseable', () => {
+    expect(
+      getGoldPriceMetadataState(
+        JSON.stringify({
+          price_per_chi: 7_900_000,
+          provider: 'SJC',
+          fetched_at: 'not-a-date',
+        }),
+        780_000_000,
+      ),
+    ).toMatchObject({
+      price: null,
+      stale: true,
+      source: 'synced',
     });
   });
 

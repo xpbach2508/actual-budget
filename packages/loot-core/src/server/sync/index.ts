@@ -92,7 +92,7 @@ function ensureGoldLotsTable(dataset: string) {
       quantity_chi REAL,
       cost_per_chi INTEGER,
       transfer_id TEXT DEFAULT NULL,
-      tombstone INTEGER NOT NULL DEFAULT 0
+      tombstone INTEGER DEFAULT 0
     );
   `);
 
@@ -109,6 +109,7 @@ function ensureGoldLotsTable(dataset: string) {
     )
   ) {
     db.execQuery(`
+      DROP TABLE IF EXISTS gold_lots_sync_repair;
       CREATE TABLE gold_lots_sync_repair (
         id TEXT PRIMARY KEY,
         account_id TEXT,
@@ -116,10 +117,10 @@ function ensureGoldLotsTable(dataset: string) {
         quantity_chi REAL,
         cost_per_chi INTEGER,
         transfer_id TEXT DEFAULT NULL,
-        tombstone INTEGER NOT NULL DEFAULT 0
+        tombstone INTEGER DEFAULT 0
       );
       INSERT INTO gold_lots_sync_repair
-        SELECT id, account_id, CAST(date AS INTEGER), quantity_chi, cost_per_chi, transfer_id, tombstone
+        SELECT id, account_id, CAST(replace(date, '-', '') AS INTEGER), quantity_chi, cost_per_chi, transfer_id, tombstone
         FROM gold_lots;
       DROP TABLE gold_lots;
       ALTER TABLE gold_lots_sync_repair RENAME TO gold_lots;

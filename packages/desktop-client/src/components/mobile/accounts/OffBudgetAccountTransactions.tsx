@@ -10,8 +10,13 @@ import type {
 } from '@actual-app/core/types/models';
 
 import { TransactionListWithBalances } from '#components/mobile/transactions/TransactionListWithBalances';
+import { useAccounts } from '#hooks/useAccounts';
 import { SchedulesProvider } from '#hooks/useCachedSchedules';
 import { useDateFormat } from '#hooks/useDateFormat';
+import {
+  shouldApplyGoldVirtualAdjustment,
+  useGoldVirtualAdjustment,
+} from '#hooks/useGoldVirtualAdjustment';
 import { useNavigate } from '#hooks/useNavigate';
 import { useOffBudgetAccounts } from '#hooks/useOffBudgetAccounts';
 import { usePreviewTransactions } from '#hooks/usePreviewTransactions';
@@ -35,6 +40,8 @@ export function OffBudgetAccountTransactions() {
 
 function TransactionListWithPreviews() {
   const { t } = useTranslation();
+  const { data: accounts = [] } = useAccounts();
+  const goldVirtualAdjustment = useGoldVirtualAdjustment(accounts);
   const baseTransactionsQuery = useCallback(
     () =>
       queries.transactions('offbudget').options({ splits: 'all' }).select('*'),
@@ -145,6 +152,11 @@ function TransactionListWithPreviews() {
       }
       transactions={transactionsToDisplay}
       balance={balanceBindings.balance}
+      balanceAdjustment={
+        shouldApplyGoldVirtualAdjustment('offbudget')
+          ? goldVirtualAdjustment
+          : 0
+      }
       isLoadingMore={isLoadingMoreTransactions}
       onLoadMore={fetchMoreTransactions}
       searchPlaceholder={t('Search Off Budget Accounts')}

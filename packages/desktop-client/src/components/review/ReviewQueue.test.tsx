@@ -13,6 +13,7 @@ describe('makeReviewQuery', () => {
     });
     expect(query.serialize().filterExpressions).toContainEqual({
       cleared: false,
+      transfer_id: null,
     });
   });
 });

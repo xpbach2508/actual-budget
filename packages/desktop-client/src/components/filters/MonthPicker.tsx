@@ -4,6 +4,7 @@ import { Button } from '@actual-app/components/button';
 import { SvgCalendar } from '@actual-app/components/icons/v1';
 import { Popover } from '@actual-app/components/popover';
 import { View } from '@actual-app/components/view';
+import type { RuleConditionEntity } from '@actual-app/core/types/models';
 import { format, parse, subMonths } from 'date-fns';
 
 type MonthPickerProps = {
@@ -21,8 +22,49 @@ function getAllowedMonths(now: Date) {
   );
 }
 
+export function parseYearMonth(value: string) {
+  return parse(`${value}-01`, 'yyyy-MM-dd', new Date());
+}
+
+export function applyMonthFilterChange({
+  value,
+  activeFilter,
+  onApplyFilter,
+  onUpdateFilter,
+  onDeleteFilter,
+}: {
+  value: string | null;
+  activeFilter: RuleConditionEntity | undefined;
+  onApplyFilter: (filter: RuleConditionEntity) => void;
+  onUpdateFilter: (
+    oldFilter: RuleConditionEntity,
+    updatedFilter: RuleConditionEntity,
+  ) => void;
+  onDeleteFilter: (filter: RuleConditionEntity) => void;
+}) {
+  if (!value) {
+    if (activeFilter) {
+      onDeleteFilter(activeFilter);
+    }
+    return;
+  }
+
+  const nextFilter = {
+    field: 'date',
+    op: 'is',
+    value,
+    options: { month: true },
+  } satisfies RuleConditionEntity;
+
+  if (activeFilter) {
+    onUpdateFilter(activeFilter, nextFilter);
+  } else {
+    onApplyFilter(nextFilter);
+  }
+}
+
 function getYear(value: string | null, fallback: number) {
-  return value ? parse(value, 'yyyy-MM', new Date()).getFullYear() : fallback;
+  return value ? parseYearMonth(value).getFullYear() : fallback;
 }
 
 export function MonthPicker({
@@ -42,7 +84,7 @@ export function MonthPicker({
   );
 
   const formatShortDisplay = (value: string) => {
-    const date = parse(value, 'yyyy-MM', new Date());
+    const date = parseYearMonth(value);
     return `T${format(date, 'M/yyyy')}`;
   };
 

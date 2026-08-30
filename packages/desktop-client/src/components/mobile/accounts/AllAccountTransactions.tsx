@@ -7,8 +7,13 @@ import { isPreviewId } from '@actual-app/core/shared/transactions';
 import type { TransactionEntity } from '@actual-app/core/types/models';
 
 import { TransactionListWithBalances } from '#components/mobile/transactions/TransactionListWithBalances';
+import { useAccounts } from '#hooks/useAccounts';
 import { SchedulesProvider } from '#hooks/useCachedSchedules';
 import { useDateFormat } from '#hooks/useDateFormat';
+import {
+  shouldApplyGoldVirtualAdjustment,
+  useGoldVirtualAdjustment,
+} from '#hooks/useGoldVirtualAdjustment';
 import { useNavigate } from '#hooks/useNavigate';
 import { usePreviewTransactions } from '#hooks/usePreviewTransactions';
 import { getSchedulesQuery } from '#hooks/useSchedules';
@@ -31,6 +36,8 @@ export function AllAccountTransactions() {
 
 function TransactionListWithPreviews() {
   const { t } = useTranslation();
+  const { data: accounts = [] } = useAccounts();
+  const goldVirtualAdjustment = useGoldVirtualAdjustment(accounts);
   const baseTransactionsQuery = useCallback(
     () => queries.transactions().options({ splits: 'all' }).select('*'),
     [],
@@ -131,6 +138,9 @@ function TransactionListWithPreviews() {
       }
       transactions={transactionsToDisplay}
       balance={balanceBindings.balance}
+      balanceAdjustment={
+        shouldApplyGoldVirtualAdjustment('all') ? goldVirtualAdjustment : 0
+      }
       isLoadingMore={isLoadingMoreTransactions}
       onLoadMore={fetchMoreTransactions}
       searchPlaceholder={t('Search All Accounts')}

@@ -39,6 +39,7 @@ import { fromDateRepr } from '#components/reports/util';
 import { useAccounts } from '#hooks/useAccounts';
 import { useDashboardWidget } from '#hooks/useDashboardWidget';
 import { useFormat } from '#hooks/useFormat';
+import { useGoldVirtualAdjustment } from '#hooks/useGoldVirtualAdjustment';
 import { useLocale } from '#hooks/useLocale';
 import { useNavigate } from '#hooks/useNavigate';
 import { useRuleConditionFilters } from '#hooks/useRuleConditionFilters';
@@ -82,6 +83,7 @@ function NetWorthInner({ widget }: NetWorthInnerProps) {
   );
 
   const { data: accounts = [] } = useAccounts();
+  const goldVirtualAdjustment = useGoldVirtualAdjustment(accounts);
   const {
     conditions,
     conditionsOp,
@@ -123,6 +125,8 @@ function NetWorthInner({ widget }: NetWorthInnerProps) {
 
   const [_firstDayOfWeekIdx] = useSyncedPref('firstDayOfWeekIdx');
   const firstDayOfWeekIdx = _firstDayOfWeekIdx || '0';
+  const applyCurrentGoldAdjustment =
+    monthUtils.monthFromDate(end) === monthUtils.currentMonth();
 
   const reportParams = useMemo(
     () =>
@@ -136,6 +140,8 @@ function NetWorthInner({ widget }: NetWorthInnerProps) {
         interval,
         firstDayOfWeekIdx,
         format,
+        goldVirtualAdjustment,
+        applyCurrentGoldAdjustment,
       ),
     [
       start,
@@ -147,6 +153,8 @@ function NetWorthInner({ widget }: NetWorthInnerProps) {
       interval,
       firstDayOfWeekIdx,
       format,
+      goldVirtualAdjustment,
+      applyCurrentGoldAdjustment,
     ],
   );
   const data = useReport('net_worth', reportParams);

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useLayoutEffect, useMemo, useState } from 'react';
 import type { RefObject } from 'react';
 
 /**
@@ -15,7 +15,8 @@ export function useIsInViewport(ref: RefObject<Element | null>) {
     [],
   );
 
-  useEffect(() => {
+  // Re-run after each commit so a sentinel that mounts later is observed.
+  useLayoutEffect(() => {
     const view = ref.current;
 
     if (!view) {
@@ -27,7 +28,7 @@ export function useIsInViewport(ref: RefObject<Element | null>) {
     return () => {
       observer.disconnect();
     };
-  }, [ref, observer]);
+  });
 
   return isIntersecting;
 }

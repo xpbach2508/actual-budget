@@ -2,8 +2,17 @@ import { describe, expect, it } from 'vitest';
 
 import {
   getGoldLedgerBalances,
+  goldVirtualAdjustmentOrZero,
   shouldApplyGoldVirtualAdjustment,
 } from './useGoldVirtualAdjustment';
+
+const goldAccount = {
+  id: 'gold',
+  account_subtype: 'gold' as const,
+  closed: 0,
+  exclude_from_totals: 0,
+  gold_current_price_per_chi: 800_000_000,
+};
 
 describe('shouldApplyGoldVirtualAdjustment', () => {
   it.each([
@@ -32,5 +41,51 @@ describe('getGoldLedgerBalances', () => {
         ['gold-b', 20_000_000],
       ]),
     );
+  });
+});
+
+describe('goldVirtualAdjustmentOrZero', () => {
+  const lots = [{ account_id: 'gold', quantity_chi: 2, tombstone: false }];
+  const transactions = [{ account: 'gold', amount: 1_400_000_000 }];
+
+  it('returns 0 until both lots and transactions have loaded', () => {
+    expect(
+      goldVirtualAdjustmentOrZero({
+        accounts: [goldAccount],
+        lots: null,
+        transactions,
+        preferences: [],
+      }),
+    ).toBe(0);
+    expect(
+      goldVirtualAdjustmentOrZero({
+        accounts: [goldAccount],
+        lots,
+        transactions: null,
+        preferences: [],
+      }),
+    ).toBe(0);
+  });
+
+  it('treats price as 0 until preferences have loaded', () => {
+    expect(
+      goldVirtualAdjustmentOrZero({
+        accounts: [goldAccount],
+        lots,
+        transactions,
+        preferences: null,
+      }),
+    ).toBe(0);
+  });
+
+  it('computes the mark-to-market adjustment once lots and ledger are loaded', () => {
+    expect(
+      goldVirtualAdjustmentOrZero({
+        accounts: [goldAccount],
+        lots,
+        transactions,
+        preferences: [],
+      }),
+    ).toBe(200_000_000);
   });
 });
