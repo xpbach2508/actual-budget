@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import type { ComponentProps } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 
+import { SvgFilter } from '@actual-app/components/icons/v1';
 import { Label } from '@actual-app/components/label';
 import { styles } from '@actual-app/components/styles';
+import { Text } from '@actual-app/components/text';
 import { theme } from '@actual-app/components/theme';
 import { View } from '@actual-app/components/view';
 import type { IntegerAmount } from '@actual-app/core/shared/util';
@@ -87,6 +89,7 @@ type TransactionListWithBalancesProps = {
   isReconciling?: boolean;
   onToggleTransactionCleared?: (transaction: TransactionEntity) => void;
   balanceAdjustment?: number;
+  filtered?: boolean;
 };
 
 export function TransactionListWithBalances({
@@ -107,6 +110,7 @@ export function TransactionListWithBalances({
   isReconciling = false,
   onToggleTransactionCleared,
   balanceAdjustment = 0,
+  filtered = false,
 }: TransactionListWithBalancesProps) {
   const selectedInst = useSelected('transactions', [...transactions], []);
 
@@ -134,10 +138,22 @@ export function TransactionListWithBalances({
                 balanceAdjustment={balanceAdjustment}
               />
             ) : (
-              <Balance
-                balance={balance}
-                balanceAdjustment={balanceAdjustment}
-              />
+              <>
+                <View style={{ flexBasis: '33%' }} />
+                <Balance
+                  balance={balance}
+                  balanceAdjustment={balanceAdjustment}
+                />
+                <View
+                  style={{
+                    flexBasis: '33%',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {filtered && <AppliedFiltersChip />}
+                </View>
+              </>
             )}
           </View>
           <TransactionSearchInput
@@ -169,6 +185,27 @@ export function TransactionListWithBalances({
         </PullToRefresh>
       </SelectedProvider>
     </DisplayPayeeProvider>
+  );
+}
+
+function AppliedFiltersChip() {
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        backgroundColor: theme.pillBackgroundSelected,
+        color: theme.pillTextSelected,
+        borderRadius: 15,
+        padding: '4px 10px',
+      }}
+    >
+      <SvgFilter width={12} height={12} style={{ flexShrink: 0 }} />
+      <Text style={{ fontSize: 12, fontWeight: 500 }}>
+        <Trans>Filters applied</Trans>
+      </Text>
+    </View>
   );
 }
 

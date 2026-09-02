@@ -65,35 +65,70 @@ async function patchBadMigrations(db: Database) {
     ]);
   }
 
-  const scheduleSortOrderMigration = 1783004650757;
   const legacyForkMigrationIds = [
-    1800000000000, 1800000000001, 1800000000002, 1800000000003,
-    1800000000004, 1800000000005, 1800000000006, 1800000000007,
+    1800000000000, 1800000000001, 1800000000002, 1800000000003, 1800000000004,
+    1800000000005, 1800000000006, 1800000000007,
   ];
   const hasLegacyForkHistory = legacyForkMigrationIds.every(id =>
     appliedIds.includes(id),
   );
 
-  if (
-    hasLegacyForkHistory &&
-    !appliedIds.includes(scheduleSortOrderMigration)
-  ) {
-    const sortOrderColumn = sqlite.runQuery<{ name: string }>(
-      db,
-      "SELECT name FROM pragma_table_info('schedules') WHERE name = 'sort_order'",
-      [],
-      true,
-    );
-    if (sortOrderColumn.length === 0) {
+  if (hasLegacyForkHistory) {
+    repairLegacyForkMissingMigration(db, appliedIds, 1783004650757, () => {
+      addColumnIfMissing(db, 'schedules', 'sort_order', 'REAL DEFAULT 0');
+    });
+    repairLegacyForkMissingMigration(db, appliedIds, 1787013118115, () => {
       sqlite.execQuery(
         db,
-        'ALTER TABLE schedules ADD COLUMN sort_order REAL DEFAULT 0',
+        `CREATE TABLE IF NOT EXISTS account_groups
+          (id TEXT PRIMARY KEY,
+           name TEXT,
+           sort_order REAL,
+           tombstone INTEGER DEFAULT 0)`,
       );
-    }
-    sqlite.runQuery(db, 'INSERT INTO __migrations__ (id) VALUES (?)', [
-      scheduleSortOrderMigration,
-    ]);
+      addColumnIfMissing(
+        db,
+        'accounts',
+        'account_group_id',
+        'TEXT DEFAULT NULL',
+      );
+    });
   }
+}
+
+function addColumnIfMissing(
+  db: Database,
+  table: string,
+  column: string,
+  definition: string,
+) {
+  const existing = sqlite.runQuery<{ name: string }>(
+    db,
+    `SELECT name FROM pragma_table_info('${table}') WHERE name = '${column}'`,
+    [],
+    true,
+  );
+  if (existing.length === 0) {
+    sqlite.execQuery(
+      db,
+      `ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`,
+    );
+  }
+}
+
+function repairLegacyForkMissingMigration(
+  db: Database,
+  appliedIds: number[],
+  migrationId: number,
+  applySchema: () => void,
+) {
+  if (appliedIds.includes(migrationId)) {
+    return;
+  }
+  applySchema();
+  sqlite.runQuery(db, 'INSERT INTO __migrations__ (id) VALUES (?)', [
+    migrationId,
+  ]);
 }
 
 export async function getAppliedMigrations(db: Database): Promise<number[]> {

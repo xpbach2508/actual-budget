@@ -81,6 +81,13 @@ export const schema = {
     account_subtype: f('string'),
     gold_current_price_per_chi: f('integer'),
     exclude_from_totals: f('boolean'),
+    account_group_id: f('id', { ref: 'account_groups' }),
+  },
+  account_groups: {
+    id: f('id'),
+    name: f('string'),
+    sort_order: f('float'),
+    tombstone: f('boolean'),
   },
   gold_lots: {
     id: f('id'),
@@ -138,6 +145,7 @@ export const schema = {
     _date: f('json/fallback'),
     _conditions: f('json'),
     _actions: f('json'),
+    _has_splits: f('boolean'),
   },
   rules: {
     id: f('id'),
@@ -300,6 +308,8 @@ export const schemaConfig: SchemaConfig = {
           ];
         case 'accounts':
           return ['sort_order', 'name'];
+        case 'account_groups':
+          return ['sort_order', 'id'];
         case 'schedules':
           return [{ $condition: { completed: true } }, 'next_date'];
         default:
@@ -358,6 +368,11 @@ export const schemaConfig: SchemaConfig = {
           _date: `json_extract(_rules.conditions, _paths.date || '.value')`,
           _conditions: '_rules.conditions',
           _actions: '_rules.actions',
+          _has_splits: `EXISTS (
+            SELECT 1
+            FROM json_each(_rules.actions) action
+            WHERE json_extract(action.value, '$.options.splitIndex') > 0
+          )`,
         });
 
         return `

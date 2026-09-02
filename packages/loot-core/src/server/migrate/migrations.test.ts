@@ -43,9 +43,13 @@ describe('Migrations', () => {
 
   test('repairs the known prior-fork history missing schedule sort order', async () => {
     const scheduleSortOrderMigration = 1783004650757;
+    const accountGroupsMigration = 1787013118115;
     const migrationIds = (await getMigrationList(getMigrationsDir()))
       .map(name => Number.parseInt(name, 10))
-      .filter(id => id !== scheduleSortOrderMigration);
+      .filter(
+        id =>
+          id !== scheduleSortOrderMigration && id !== accountGroupsMigration,
+      );
 
     db.runQuery(
       'CREATE TABLE schedules (id TEXT PRIMARY KEY, rule TEXT NOT NULL)',
@@ -63,6 +67,35 @@ describe('Migrations', () => {
     ).toEqual({ name: 'sort_order' });
     expect(await getAppliedMigrations(db.getDatabase())).toContain(
       scheduleSortOrderMigration,
+    );
+
+    await expect(migrate(db.getDatabase())).resolves.toBeUndefined();
+  });
+
+  test('repairs the known prior-fork history missing account groups', async () => {
+    const accountGroupsMigration = 1787013118115;
+    const migrationIds = (await getMigrationList(getMigrationsDir()))
+      .map(name => Number.parseInt(name, 10))
+      .filter(id => id !== accountGroupsMigration);
+
+    for (const id of migrationIds) {
+      db.runQuery('INSERT INTO __migrations__ (id) VALUES (?)', [id]);
+    }
+
+    await expect(migrate(db.getDatabase())).resolves.toBeUndefined();
+
+    expect(
+      await db.first<{ name: string }>(
+        "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'account_groups'",
+      ),
+    ).toEqual({ name: 'account_groups' });
+    expect(
+      await db.first<{ name: string }>(
+        "SELECT name FROM pragma_table_info('accounts') WHERE name = 'account_group_id'",
+      ),
+    ).toEqual({ name: 'account_group_id' });
+    expect(await getAppliedMigrations(db.getDatabase())).toContain(
+      accountGroupsMigration,
     );
 
     await expect(migrate(db.getDatabase())).resolves.toBeUndefined();

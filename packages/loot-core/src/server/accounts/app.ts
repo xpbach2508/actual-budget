@@ -101,14 +101,22 @@ async function updateAccount({
   name,
   last_reconciled,
   exclude_from_totals,
-}: Partial<AccountEntity> & Pick<AccountEntity, 'id'>) {
+  account_group_id,
+}: Pick<AccountEntity, 'id' | 'name'> &
+  Partial<
+    Pick<
+      AccountEntity,
+      'last_reconciled' | 'account_group_id' | 'exclude_from_totals'
+    >
+  >) {
   await db.update('accounts', {
     id,
-    ...(name !== undefined && { name }),
+    name,
     ...(last_reconciled !== undefined && { last_reconciled }),
     ...(exclude_from_totals !== undefined && {
       exclude_from_totals: exclude_from_totals ? 1 : 0,
     }),
+    ...(account_group_id !== undefined && { account_group_id }),
   });
   return {};
 }
@@ -143,6 +151,7 @@ async function getAccounts(): Promise<AccountEntity[]> {
         gold_current_price_per_chi:
           dbAccount.gold_current_price_per_chi ?? null,
         exclude_from_totals: dbAccount.exclude_from_totals ?? 0,
+        account_group_id: dbAccount.account_group_id ?? null,
       }) satisfies AccountEntity,
   );
 }
@@ -1848,16 +1857,25 @@ async function importTransactions({
     throw APIError('transactions-import: accountId must be an id');
   }
 
+  const payeeNameNormalization = opts?.payeeNameNormalization ?? 'title-case';
+  if (!bankSync.PAYEE_NAME_NORMALIZATIONS.includes(payeeNameNormalization)) {
+    throw APIError(
+      `transactions-import: payeeNameNormalization must be one of ${bankSync.PAYEE_NAME_NORMALIZATIONS.join(
+        ', ',
+      )}, got '${String(payeeNameNormalization)}'`,
+    );
+  }
+
   try {
     const reconciled = await bankSync.reconcileTransactions(
       accountId,
       transactions,
-      false,
-      true,
-      isPreview,
-      opts?.defaultCleared,
-      false,
-      opts?.reimportDeleted,
+      {
+        isPreview,
+        defaultCleared: opts?.defaultCleared,
+        reimportDeleted: opts?.reimportDeleted,
+        payeeNameNormalization,
+      },
     );
     return {
       errors: [],

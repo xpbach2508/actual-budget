@@ -83,13 +83,14 @@ export function convertReviewTransactionToTransfer({
     updated: [
       {
         id: transaction.id,
-        category: null,
+        // Runtime API still uses null to clear the category on a transfer.
+        category: null as unknown as TransactionEntity['category'],
         payee: toPayee?.id,
         transfer_id: opposite.id,
       },
       {
         id: opposite.id,
-        category: null,
+        category: null as unknown as TransactionEntity['category'],
         payee: fromPayee?.id,
         transfer_id: transaction.id,
       },
