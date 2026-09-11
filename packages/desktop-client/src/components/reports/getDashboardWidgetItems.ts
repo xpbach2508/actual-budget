@@ -18,6 +18,7 @@ type GetDashboardWidgetItemsParams = {
 };
 
 type DashboardWidgetMenuName =
+  | 'asset-allocation-card'
   | 'balance-forecast-card'
   | 'budget-analysis-card'
   | 'calendar-card'
@@ -57,6 +58,10 @@ export function getDashboardWidgetItems({
     {
       name: 'net-worth-card',
       text: t('Net worth graph'),
+    },
+    {
+      name: 'asset-allocation-card',
+      text: t('Asset allocation'),
     },
     {
       name: 'spending-card',
@@ -112,7 +117,7 @@ export function getDashboardWidgetItems({
     items.push(Menu.line);
     items.push(
       ...customReports.map(report => ({
-        name: `custom-report-${report.id}`,
+        name: `custom-report-${report.id}` as const,
         text: report.name,
       })),
     );

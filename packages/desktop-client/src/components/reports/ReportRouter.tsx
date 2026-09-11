@@ -6,6 +6,7 @@ import { FeatureErrorFallback } from '#components/FeatureErrorFallback';
 import { useFeatureFlag } from '#hooks/useFeatureFlag';
 
 import { AgeOfMoney } from './reports/AgeOfMoney';
+import { AssetAllocation } from './reports/AssetAllocation';
 import { BalanceForecast } from './reports/BalanceForecast';
 import { BudgetAnalysis } from './reports/BudgetAnalysis';
 import { Calendar } from './reports/Calendar';
@@ -55,6 +56,22 @@ export function ReportRouter() {
         element={
           <ReportBoundary>
             <NetWorth />
+          </ReportBoundary>
+        }
+      />
+      <Route
+        path="/asset-allocation"
+        element={
+          <ReportBoundary>
+            <AssetAllocation />
+          </ReportBoundary>
+        }
+      />
+      <Route
+        path="/asset-allocation/:id"
+        element={
+          <ReportBoundary>
+            <AssetAllocation />
           </ReportBoundary>
         }
       />

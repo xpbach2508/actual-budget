@@ -65,6 +65,7 @@ import { FormulaCard } from './reports/FormulaCard';
 import { MarkdownCard } from './reports/MarkdownCard';
 import { MissingReportCard } from './reports/MissingReportCard';
 import { MonteCarloCard } from './reports/monte-carlo/MonteCarloCard';
+import { AssetAllocationCard } from './reports/AssetAllocationCard';
 import { NetWorthCard } from './reports/NetWorthCard';
 import { SankeyCard } from './reports/SankeyCard';
 import { SpendingCard } from './reports/SpendingCard';
@@ -587,6 +588,10 @@ export function Overview({ dashboard }: OverviewProps) {
                               text: t('Net worth graph'),
                             },
                             {
+                              name: 'asset-allocation-card' as const,
+                              text: t('Asset allocation'),
+                            },
+                            {
                               name: 'crossover-card' as const,
                               text: t('Crossover point'),
                             },
@@ -803,6 +808,16 @@ export function Overview({ dashboard }: OverviewProps) {
                       >
                         {widget.type === 'net-worth-card' ? (
                           <NetWorthCard
+                            widgetId={item.i}
+                            isEditing={isEditing}
+                            accounts={accounts}
+                            meta={widget.meta}
+                            onMetaChange={newMeta =>
+                              onMetaChange(item, newMeta)
+                            }
+                          />
+                        ) : widget.type === 'asset-allocation-card' ? (
+                          <AssetAllocationCard
                             widgetId={item.i}
                             isEditing={isEditing}
                             accounts={accounts}

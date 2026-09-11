@@ -8,6 +8,19 @@ function getNames(items: ReturnType<typeof getDashboardWidgetItems>) {
 }
 
 describe('getDashboardWidgetItems', () => {
+  it('includes asset allocation card by default', () => {
+    const items = getDashboardWidgetItems({
+      t: value => value,
+      customReports: [],
+      formulaMode: false,
+      crossoverReportEnabled: false,
+      budgetAnalysisReportEnabled: false,
+      balanceForecastReportEnabled: false,
+    });
+
+    expect(getNames(items)).toContain('asset-allocation-card');
+  });
+
   it('includes the balance forecast card only when the flag is enabled', () => {
     const disabled = getDashboardWidgetItems({
       t: value => value,

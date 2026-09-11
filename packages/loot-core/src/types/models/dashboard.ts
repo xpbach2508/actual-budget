@@ -298,7 +298,8 @@ type SpecializedWidget =
   | FormulaWidget
   | SankeyWidget
   | AgeOfMoneyWidget
-  | BalanceForecastWidget;
+  | BalanceForecastWidget
+  | AssetAllocationWidget;
 export type DashboardWidgetEntity = SpecializedWidget | CustomReportWidget;
 export type NewDashboardWidgetEntity = Omit<
   DashboardWidgetEntity,
@@ -412,5 +413,14 @@ export type BalanceForecastWidget = AbstractWidget<
     timeFrame?: TimeFrame;
     granularity?: 'Daily' | 'Monthly';
     source?: ForecastSource;
+  } | null
+>;
+
+export type AssetAllocationWidget = AbstractWidget<
+  'asset-allocation-card',
+  {
+    name?: string;
+    groupBy?: 'subtype' | 'account';
+    showDebts?: boolean;
   } | null
 >;
