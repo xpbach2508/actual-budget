@@ -109,231 +109,315 @@ export function AssetAllocationGraph({
           flex: 1,
           alignItems: 'center',
           justifyContent: 'center',
-          minHeight: 200,
+          minHeight: 120,
           color: theme.pageTextSubdued,
           fontSize: 14,
           gap: 8,
           ...style,
         }}
       >
-        <div style={{ fontSize: 32 }}>📊</div>
+        <div style={{ fontSize: 28 }}>📊</div>
         <div>{t('No asset data available')}</div>
       </View>
     );
   }
 
-  const chartHeight = compact ? 190 : 250;
-
   return (
-    <View style={{ flex: 1, flexDirection: 'column', ...style }}>
-      <Container style={{ height: chartHeight, position: 'relative' }}>
-        {(width, height) => {
-          const minDim = Math.min(width, height);
-          const innerRadius = minDim * 0.26;
-          const outerRadius = minDim * 0.40;
+    <Container
+      style={{
+        flex: 1,
+        height: 'auto',
+        minHeight: 0,
+        position: 'relative',
+        ...style,
+      }}
+    >
+      {(width, height) => {
+        // Decide layout based on dimensions and compact flag
+        const isHorizontalLayout = compact && width >= 260 && height < 230;
+        const isCompactVertical = compact && (!isHorizontalLayout || height >= 230);
 
-          return (
+        let chartWidth = width;
+        let chartHeight = height;
+
+        if (isHorizontalLayout) {
+          // Donut on left, legend on right
+          chartWidth = Math.min(Math.floor(width * 0.46), height);
+          chartHeight = height;
+        } else if (isCompactVertical && showLegend && height >= 200) {
+          chartHeight = Math.floor(height * 0.58);
+        }
+
+        const chartDim = Math.min(chartWidth, chartHeight);
+        const outerRadius = Math.max(18, Math.floor(chartDim * 0.43));
+        const innerRadius = Math.max(10, Math.floor(chartDim * 0.27));
+
+        const activeSlice = activeIndex !== null ? slices[activeIndex] : null;
+
+        const chartElement = (
+          <div
+            style={{
+              width: chartWidth,
+              height: chartHeight,
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <PieChart width={chartWidth} height={chartHeight}>
+              <Pie
+                data={slices}
+                dataKey="value"
+                nameKey="name"
+                cx={chartWidth / 2}
+                cy={chartHeight / 2}
+                innerRadius={innerRadius}
+                outerRadius={outerRadius}
+                startAngle={90}
+                endAngle={-270}
+                onMouseEnter={(_, index) => setActiveIndex(index)}
+                onMouseLeave={() => setActiveIndex(null)}
+                shape={(props: PieSectorShapeProps) => {
+                  const { index } = props;
+                  const item = slices[index];
+                  const fill = item?.color ?? props.fill;
+                  const isHovered = activeIndex === index;
+
+                  if (isHovered) {
+                    return (
+                      <Sector
+                        {...props}
+                        innerRadius={Math.max(0, innerRadius - 2)}
+                        outerRadius={outerRadius + 3}
+                        fill={fill}
+                        style={{
+                          filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.25))',
+                        }}
+                      />
+                    );
+                  }
+                  return <Sector {...props} fill={fill} />;
+                }}
+                {...animationProps}
+              >
+                {slices.map(slice => (
+                  <Cell key={slice.id} fill={slice.color} />
+                ))}
+              </Pie>
+              <Tooltip
+                content={<AllocationTooltip format={format} />}
+                isAnimationActive={false}
+              />
+            </PieChart>
+
+            {/* Center Total / Active Slice Overlay */}
             <div
               style={{
-                width,
-                height,
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                textAlign: 'center',
+                pointerEvents: 'none',
+                maxWidth: innerRadius * 1.85,
+                overflow: 'hidden',
               }}
             >
-              <PieChart width={width} height={height}>
-                <Pie
-                  data={slices}
-                  dataKey="value"
-                  nameKey="name"
-                  cx={width / 2}
-                  cy={height / 2}
-                  innerRadius={innerRadius}
-                  outerRadius={outerRadius}
-                  startAngle={90}
-                  endAngle={-270}
-                  onMouseEnter={(_, index) => setActiveIndex(index)}
-                  onMouseLeave={() => setActiveIndex(null)}
-                  shape={(props: PieSectorShapeProps) => {
-                    const { index } = props;
-                    const item = slices[index];
-                    const fill = item?.color ?? props.fill;
-                    const isHovered = activeIndex === index;
-
-                    if (isHovered) {
-                      return (
-                        <Sector
-                          {...props}
-                          innerRadius={Math.max(0, innerRadius - 3)}
-                          outerRadius={outerRadius + 4}
-                          fill={fill}
-                          style={{
-                            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.25))',
-                          }}
-                        />
-                      );
-                    }
-                    return <Sector {...props} fill={fill} />;
-                  }}
-                  {...animationProps}
-                >
-                  {slices.map(slice => (
-                    <Cell key={slice.id} fill={slice.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  content={<AllocationTooltip format={format} />}
-                  isAnimationActive={false}
-                />
-              </PieChart>
-
-              {/* Center Total Assets Overlay */}
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  textAlign: 'center',
-                  pointerEvents: 'none',
-                  maxWidth: innerRadius * 1.8,
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: compact ? 11 : 12,
-                    color: theme.pageTextSubdued,
-                    fontWeight: 500,
-                    textTransform: 'uppercase',
-                    letterSpacing: 0.5,
-                  }}
-                >
-                  {t('Total assets')}
-                </div>
-                <div
-                  style={{
-                    fontSize: compact ? 15 : 18,
-                    fontWeight: 700,
-                    color: theme.pageText,
-                    marginTop: 2,
-                    lineHeight: 1.2,
-                  }}
-                >
-                  <FinancialText>
-                    <PrivacyFilter>
-                      {format(totalAssets, 'financial')}
-                    </PrivacyFilter>
-                  </FinancialText>
-                </div>
-              </div>
-            </div>
-          );
-        }}
-      </Container>
-
-      {/* Legend list */}
-      {showLegend && (
-        <View
-          style={{
-            padding: '4px 8px 8px 8px',
-            gap: 6,
-            maxHeight: compact ? 120 : 180,
-            overflowY: 'auto',
-          }}
-        >
-          {slices.map((slice, index) => {
-            const isSelected = activeIndex === index;
-            return (
-              <div
-                key={slice.id}
-                onMouseEnter={() => setActiveIndex(index)}
-                onMouseLeave={() => setActiveIndex(null)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '4px 6px',
-                  borderRadius: 4,
-                  backgroundColor: isSelected
-                    ? theme.tableRowBackgroundHover
-                    : 'transparent',
-                  transition: 'background-color 0.15s ease',
-                  cursor: 'pointer',
-                  fontSize: 12,
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    minWidth: 0,
-                    flex: 1,
-                  }}
-                >
+              {activeSlice ? (
+                <>
                   <div
                     style={{
-                      width: 10,
-                      height: 10,
-                      borderRadius: '50%',
-                      backgroundColor: slice.color,
-                      flexShrink: 0,
-                    }}
-                  />
-                  {slice.icon && (
-                    <span style={{ fontSize: 14 }}>{slice.icon}</span>
-                  )}
-                  <span
-                    style={{
+                      fontSize: Math.max(9, Math.min(12, innerRadius * 0.32)),
+                      color: theme.pageTextSubdued,
                       fontWeight: 500,
-                      color: theme.pageText,
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    {slice.name}
-                  </span>
-                </div>
+                    {activeSlice.name}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: Math.max(12, Math.min(16, innerRadius * 0.44)),
+                      fontWeight: 700,
+                      color: theme.pageText,
+                      marginTop: 1,
+                      lineHeight: 1.1,
+                    }}
+                  >
+                    {activeSlice.percent.toFixed(1)}%
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div
+                    style={{
+                      fontSize: Math.max(8, Math.min(11, innerRadius * 0.28)),
+                      color: theme.pageTextSubdued,
+                      fontWeight: 500,
+                      textTransform: 'uppercase',
+                      letterSpacing: 0.5,
+                    }}
+                  >
+                    {t('Total')}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: Math.max(10, Math.min(16, innerRadius * 0.36)),
+                      fontWeight: 700,
+                      color: theme.pageText,
+                      marginTop: 1,
+                      lineHeight: 1.1,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <FinancialText>
+                      <PrivacyFilter>
+                        {format(totalAssets, 'financial')}
+                      </PrivacyFilter>
+                    </FinancialText>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        );
 
+        const legendElement = showLegend && (
+          <div
+            style={{
+              flex: 1,
+              minWidth: 0,
+              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: isHorizontalLayout ? 'center' : 'flex-start',
+              gap: 4,
+              padding: isHorizontalLayout ? '0 4px 0 8px' : '4px 6px',
+              maxHeight: isHorizontalLayout ? height : Math.max(60, height - chartHeight),
+            }}
+          >
+            {slices.map((slice, index) => {
+              const isSelected = activeIndex === index;
+              return (
                 <div
+                  key={slice.id}
+                  onMouseEnter={() => setActiveIndex(index)}
+                  onMouseLeave={() => setActiveIndex(null)}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 8,
-                    flexShrink: 0,
+                    justifyContent: 'space-between',
+                    padding: '2px 4px',
+                    borderRadius: 4,
+                    backgroundColor: isSelected
+                      ? theme.tableRowBackgroundHover
+                      : 'transparent',
+                    transition: 'background-color 0.15s ease',
+                    cursor: 'pointer',
+                    fontSize: compact ? 11 : 12,
+                    lineHeight: 1.3,
                   }}
                 >
-                  <FinancialText
+                  <div
                     style={{
-                      color: theme.pageText,
-                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      minWidth: 0,
+                      flex: 1,
                     }}
                   >
-                    <PrivacyFilter>
-                      {format(slice.value, 'financial')}
-                    </PrivacyFilter>
-                  </FinancialText>
+                    <div
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        backgroundColor: slice.color,
+                        flexShrink: 0,
+                      }}
+                    />
+                    {slice.icon && (
+                      <span style={{ fontSize: 12 }}>{slice.icon}</span>
+                    )}
+                    <span
+                      style={{
+                        fontWeight: 500,
+                        color: theme.pageText,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {slice.name}
+                    </span>
+                  </div>
 
-                  <span
+                  <div
                     style={{
-                      color: theme.pageTextSubdued,
-                      fontSize: 11,
-                      fontWeight: 600,
-                      minWidth: 42,
-                      textAlign: 'right',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      flexShrink: 0,
+                      marginLeft: 6,
                     }}
                   >
-                    {slice.percent.toFixed(1)}%
-                  </span>
+                    {!isHorizontalLayout && (
+                      <FinancialText
+                        style={{
+                          color: theme.pageText,
+                          fontWeight: 600,
+                          fontSize: compact ? 11 : 12,
+                        }}
+                      >
+                        <PrivacyFilter>
+                          {format(slice.value, 'financial')}
+                        </PrivacyFilter>
+                      </FinancialText>
+                    )}
+
+                    <span
+                      style={{
+                        color: isSelected
+                          ? theme.noticeTextLight
+                          : theme.pageTextSubdued,
+                        fontWeight: 700,
+                        minWidth: 36,
+                        textAlign: 'right',
+                        fontSize: compact ? 10 : 11,
+                      }}
+                    >
+                      {slice.percent.toFixed(1)}%
+                    </span>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </View>
-      )}
-    </View>
+              );
+            })}
+          </div>
+        );
+
+        return (
+          <div
+            style={{
+              width,
+              height,
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: isHorizontalLayout ? 'row' : 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {chartElement}
+            {legendElement}
+          </div>
+        );
+      }}
+    </Container>
   );
 }

@@ -12,10 +12,13 @@ import type {
   AssetAllocationWidget,
 } from '@actual-app/core/types/models';
 
+import { FinancialText } from '#components/FinancialText';
+import { PrivacyFilter } from '#components/PrivacyFilter';
 import { LoadingIndicator } from '#components/reports/LoadingIndicator';
 import { ReportCard } from '#components/reports/ReportCard';
 import { ReportCardName } from '#components/reports/ReportCardName';
 import { useAssetAllocation } from '#hooks/useAssetAllocation';
+import { useFormat } from '#hooks/useFormat';
 
 import { AssetAllocationGraph } from '../graphs/AssetAllocationGraph';
 
@@ -35,6 +38,7 @@ export function AssetAllocationCard({
   onMetaChange,
 }: AssetAllocationCardProps) {
   const { t } = useTranslation();
+  const format = useFormat();
   const [nameMenuOpen, setNameMenuOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -56,16 +60,24 @@ export function AssetAllocationCard({
       to={`/reports/asset-allocation/${widgetId}`}
       onRename={() => setNameMenuOpen(true)}
     >
-      <View style={{ flex: 1, padding: 16 }}>
+      <View
+        style={{
+          flex: 1,
+          padding: '12px 16px 12px 16px',
+          minHeight: 0,
+          overflow: 'hidden',
+        }}
+      >
         <View
           style={{
             flexDirection: 'row',
             justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: 10,
+            alignItems: 'flex-start',
+            marginBottom: 6,
+            flexShrink: 0,
           }}
         >
-          <View style={{ flex: 1, minWidth: 0 }}>
+          <View style={{ flex: 1, minWidth: 0, marginRight: 8 }}>
             <ReportCardName
               name={meta?.name || t('Asset allocation')}
               isEditing={nameMenuOpen}
@@ -91,18 +103,32 @@ export function AssetAllocationCard({
             </span>
           </View>
 
-          <Button
-            ref={menuTriggerRef}
-            variant="bare"
-            style={{
-              padding: '2px 6px',
-              fontSize: 11,
-              color: theme.pageTextSubdued,
-            }}
-            onPress={() => setMenuOpen(true)}
-          >
-            ⚙️ {groupBy === 'subtype' ? t('Asset type') : t('Account')}
-          </Button>
+          <View style={{ alignItems: 'flex-end', gap: 2 }}>
+            <PrivacyFilter>
+              <FinancialText
+                style={{
+                  ...styles.mediumText,
+                  fontWeight: 600,
+                  color: theme.pageText,
+                }}
+              >
+                {format(totalAssets, 'financial')}
+              </FinancialText>
+            </PrivacyFilter>
+
+            <Button
+              ref={menuTriggerRef}
+              variant="bare"
+              style={{
+                padding: '2px 4px',
+                fontSize: 10,
+                color: theme.pageTextSubdued,
+              }}
+              onPress={() => setMenuOpen(true)}
+            >
+              ⚙️ {groupBy === 'subtype' ? t('Asset type') : t('Account')}
+            </Button>
+          </View>
 
           <Popover
             triggerRef={menuTriggerRef}
@@ -144,13 +170,15 @@ export function AssetAllocationCard({
         {isLoading ? (
           <LoadingIndicator />
         ) : (
-          <AssetAllocationGraph
-            slices={slices}
-            totalAssets={totalAssets}
-            compact
-            showLegend
-            style={{ flex: 1 }}
-          />
+          <View style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+            <AssetAllocationGraph
+              slices={slices}
+              totalAssets={totalAssets}
+              compact
+              showLegend
+              style={{ height: 'auto', flex: 1 }}
+            />
+          </View>
         )}
       </View>
     </ReportCard>
