@@ -23,6 +23,7 @@ import { ReportCardName } from '#components/reports/ReportCardName';
 import { calculateTimeRange } from '#components/reports/reportRanges';
 import { createSpreadsheet as netWorthSpreadsheet } from '#components/reports/spreadsheets/net-worth-spreadsheet';
 import { useReport } from '#components/reports/useReport';
+import { useDateFormat } from '#hooks/useDateFormat';
 import { useFormat } from '#hooks/useFormat';
 import { useGoldVirtualAdjustment } from '#hooks/useGoldVirtualAdjustment';
 import { useLocale } from '#hooks/useLocale';
@@ -50,6 +51,7 @@ export function NetWorthCard({
   const firstDayOfWeekIdx = _firstDayOfWeekIdx || '0';
   const format = useFormat();
   const goldVirtualAdjustment = useGoldVirtualAdjustment(accounts);
+  const dateFormat = useDateFormat() || 'MM/dd/yyyy';
 
   const [latestTransaction, setLatestTransaction] = useState<string>('');
   const [nameMenuOpen, setNameMenuOpen] = useState(false);
@@ -87,6 +89,7 @@ export function NetWorthCard({
         meta?.interval || 'Monthly',
         firstDayOfWeekIdx,
         format,
+        dateFormat,
         goldVirtualAdjustment,
         applyCurrentGoldAdjustment,
       ),
@@ -100,6 +103,7 @@ export function NetWorthCard({
       meta?.interval,
       firstDayOfWeekIdx,
       format,
+      dateFormat,
       goldVirtualAdjustment,
       applyCurrentGoldAdjustment,
     ],

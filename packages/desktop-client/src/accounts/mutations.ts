@@ -7,6 +7,7 @@ import type {
 } from '@actual-app/core/server/accounts/app';
 import type {
   AccountEntity,
+  AccountGroupEntity,
   CategoryEntity,
   SyncServerAkahuAccount,
   SyncServerEnableBankingAccount,
@@ -240,7 +241,7 @@ export function useReopenAccountMutation() {
 }
 
 type UpdateAccountPayload = {
-  account: AccountEntity;
+  account: Pick<AccountEntity, 'id'> & Partial<AccountEntity>;
 };
 
 export function useUpdateAccountMutation() {
@@ -273,6 +274,7 @@ export function useUpdateAccountMutation() {
 type MoveAccountPayload = {
   id: AccountEntity['id'];
   targetId: AccountEntity['id'] | null;
+  accountGroupId?: AccountGroupEntity['id'] | null;
 };
 
 export function useMoveAccountMutation() {
@@ -281,8 +283,12 @@ export function useMoveAccountMutation() {
   const { t } = useTranslation();
 
   return useMutation({
-    mutationFn: async ({ id, targetId }: MoveAccountPayload) => {
-      await send('account-move', { id, targetId });
+    mutationFn: async ({
+      id,
+      targetId,
+      accountGroupId,
+    }: MoveAccountPayload) => {
+      await send('account-move', { id, targetId, accountGroupId });
     },
     onSuccess: () => {
       invalidateQueries(queryClient);

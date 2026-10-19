@@ -831,7 +831,8 @@ class AccountInternal extends PureComponent<
       | 'toggle-reconciled'
       | 'toggle-net-worth-chart'
       | 'toggle-exclude-from-totals'
-      | 'manage-columns',
+      | 'manage-columns'
+      | 'account-group',
   ) => {
     const accountId = this.props.accountId!;
     const account = this.props.accounts.find(
@@ -875,6 +876,18 @@ class AccountInternal extends PureComponent<
         break;
       case 'close':
         void this.props.dispatch(openAccountCloseModal({ accountId }));
+        break;
+      case 'account-group':
+        this.props.dispatch(
+          pushModal({
+            modal: {
+              name: 'account-groups',
+              options: {
+                accountId,
+              },
+            },
+          }),
+        );
         break;
       case 'reopen':
         this.props.onReopenAccount(accountId);

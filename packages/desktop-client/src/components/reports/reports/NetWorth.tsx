@@ -38,6 +38,7 @@ import { useReport } from '#components/reports/useReport';
 import { fromDateRepr } from '#components/reports/util';
 import { useAccounts } from '#hooks/useAccounts';
 import { useDashboardWidget } from '#hooks/useDashboardWidget';
+import { useDateFormat } from '#hooks/useDateFormat';
 import { useFormat } from '#hooks/useFormat';
 import { useGoldVirtualAdjustment } from '#hooks/useGoldVirtualAdjustment';
 import { useLocale } from '#hooks/useLocale';
@@ -127,6 +128,7 @@ function NetWorthInner({ widget }: NetWorthInnerProps) {
   const firstDayOfWeekIdx = _firstDayOfWeekIdx || '0';
   const applyCurrentGoldAdjustment =
     monthUtils.monthFromDate(end) === monthUtils.currentMonth();
+  const dateFormat = useDateFormat() || 'MM/dd/yyyy';
 
   const reportParams = useMemo(
     () =>
@@ -140,6 +142,7 @@ function NetWorthInner({ widget }: NetWorthInnerProps) {
         interval,
         firstDayOfWeekIdx,
         format,
+        dateFormat,
         goldVirtualAdjustment,
         applyCurrentGoldAdjustment,
       ),
@@ -153,6 +156,7 @@ function NetWorthInner({ widget }: NetWorthInnerProps) {
       interval,
       firstDayOfWeekIdx,
       format,
+      dateFormat,
       goldVirtualAdjustment,
       applyCurrentGoldAdjustment,
     ],
