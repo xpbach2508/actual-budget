@@ -106,6 +106,7 @@ type TransactionListProps = Pick<
   | 'onCreatePayee'
   | 'onCreateRule'
   | 'onMakeAsNonSplitTransactions'
+  | 'onSettleNetZero'
   | 'onSort'
   | 'onScheduleAction'
   | 'payees'
@@ -178,6 +179,7 @@ export function TransactionList({
   onCreateRule,
   onScheduleAction,
   onMakeAsNonSplitTransactions,
+  onSettleNetZero,
 }: TransactionListProps) {
   const isGoldAccount = account?.account_subtype === 'gold';
   const { data: goldLots } = useQuery<{
@@ -583,6 +585,7 @@ export function TransactionList({
         onCreateRule={onCreateRule}
         onScheduleAction={onScheduleAction}
         onMakeAsNonSplitTransactions={onMakeAsNonSplitTransactions}
+        onSettleNetZero={onSettleNetZero}
         showSelection={showSelection}
         allowSplitTransaction={allowSplitTransaction}
       />

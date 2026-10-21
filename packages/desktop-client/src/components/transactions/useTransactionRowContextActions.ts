@@ -31,6 +31,7 @@ type TransactionRowContextMenuProps = {
     ids: TransactionEntity['id'][],
   ) => void;
   onMakeAsNonSplitTransactions: (ids: string[]) => void;
+  onSettleNetZero?: (ids: string[]) => void;
 };
 
 export function useTransactionRowContextActions({
@@ -44,6 +45,7 @@ export function useTransactionRowContextActions({
   onCreateRule,
   onScheduleAction,
   onMakeAsNonSplitTransactions,
+  onSettleNetZero,
 }: TransactionRowContextMenuProps) {
   const { t } = useTranslation();
   const dispatch = useDispatch();
@@ -117,6 +119,36 @@ export function useTransactionRowContextActions({
 
     return singleSchedules.length === selectedSchedules.length;
   }, [selectedSchedules]);
+
+  const canMakeAsNetZeroGroup = useMemo(() => {
+    if (selectedIds.length <= 1 || types.preview) {
+      return false;
+    }
+
+    const transactions = selectedIds.map(id => getTransaction(id));
+    const [firstTransaction] = transactions;
+
+    const areAllSameAccount = transactions.every(
+      tx => tx && tx.account === firstTransaction?.account,
+    );
+    const areNoSplitTransactions = transactions.every(
+      tx => tx && !tx.is_parent && !tx.is_child,
+    );
+    const areNoReconciledTransactions = transactions.every(
+      tx => tx && !tx.reconciled,
+    );
+    const sum = transactions.reduce(
+      (total, tx) => total + (tx ? tx.amount : 0),
+      0,
+    );
+
+    return (
+      areAllSameAccount &&
+      areNoSplitTransactions &&
+      areNoReconciledTransactions &&
+      sum === 0
+    );
+  }, [selectedIds, types, getTransaction]);
 
   const canUnsplitTransactions = useMemo(() => {
     if (selectedIds.length === 0 || types.preview) {
@@ -220,6 +252,12 @@ export function useTransactionRowContextActions({
       text: t('Create rule'),
       onClick: () => onCreateRule(selectedIds),
       hidden: linked,
+    },
+    {
+      name: 'settle-net-zero',
+      text: t('Settle net-zero bundle'),
+      onClick: () => onSettleNetZero?.(selectedIds),
+      hidden: !canMakeAsNetZeroGroup || !onSettleNetZero,
     },
     {
       name: 'unsplit-transactions',

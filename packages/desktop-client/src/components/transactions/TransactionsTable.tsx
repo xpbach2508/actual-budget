@@ -648,6 +648,8 @@ type PayeeCellProps = {
   onManagePayees: (id: PayeeEntity['id'] | undefined) => void;
   onNavigateToTransferAccount: (id: AccountEntity['id']) => void;
   onNavigateToSchedule: (id: ScheduleEntity['id']) => void;
+  expanded?: boolean;
+  onToggleSplit?: (id: TransactionEntity['id']) => void;
 };
 
 function PayeeCell({
@@ -667,6 +669,8 @@ function PayeeCell({
   onManagePayees,
   onNavigateToTransferAccount,
   onNavigateToSchedule,
+  expanded,
+  onToggleSplit,
 }: PayeeCellProps) {
   const isCreatingPayee = useRef(false);
   const { t } = useTranslation();
@@ -682,12 +686,62 @@ function PayeeCell({
       name="payee"
       width="flex"
       focused={focused}
-      style={{ padding: 0 }}
+      style={{
+        padding: 0,
+        flexDirection: 'row',
+        alignItems: 'center',
+      }}
       plain
     >
+      {onToggleSplit && (
+        <CellButton
+          bare
+          aria-label={expanded ? t('Collapse') : t('Expand')}
+          style={{
+            padding: '2px 4px',
+            marginLeft: 2,
+            marginRight: 2,
+            borderRadius: 4,
+            cursor: 'pointer',
+            border: '1px solid transparent',
+            ':hover': {
+              border: '1px solid ' + theme.buttonNormalBorder,
+            },
+          }}
+          disabled={isPreview}
+          onSelect={() => onToggleSplit(transaction.id)}
+        >
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              color: theme.pageTextSubdued,
+            }}
+          >
+            <SvgCheveronDown
+              style={{
+                width: 14,
+                height: 14,
+                marginRight: 3,
+                transition: 'transform .08s',
+                transform: expanded ? 'rotateZ(0)' : 'rotateZ(-90deg)',
+              }}
+            />
+            <SvgSplit
+              style={{
+                color: 'inherit',
+                width: 14,
+                height: 14,
+                flexShrink: 0,
+              }}
+            />
+          </View>
+        </CellButton>
+      )}
       <CellButton
         bare
         style={{
+          flex: 1,
           alignSelf: 'stretch',
           borderRadius: 4,
           border: '1px solid transparent', // so it doesn't shift on hover
@@ -730,15 +784,17 @@ function PayeeCell({
             onNavigateToTransferAccount={onNavigateToTransferAccount}
             onNavigateToSchedule={onNavigateToSchedule}
           />
-          <SvgSplit
-            style={{
-              color: 'inherit',
-              width: 14,
-              height: 14,
-              marginRight: 5,
-              flexShrink: 0,
-            }}
-          />
+          {!onToggleSplit && (
+            <SvgSplit
+              style={{
+                color: 'inherit',
+                width: 14,
+                height: 14,
+                marginRight: 5,
+                flexShrink: 0,
+              }}
+            />
+          )}
           <Text
             style={{
               fontStyle: 'italic',
@@ -1024,6 +1080,7 @@ type TransactionProps = {
     ids: TransactionEntity['id'][],
   ) => void;
   onMakeAsNonSplitTransactions?: (ids: TransactionEntity['id'][]) => void;
+  onSettleNetZero?: (ids: TransactionEntity['id'][]) => void;
   onSplit: (id: TransactionEntity['id']) => void;
   onToggleSplit: (id: TransactionEntity['id']) => void;
   onCreatePayee: (name: string) => Promise<null | PayeeEntity['id']>;
@@ -1086,6 +1143,7 @@ const Transaction = memo(function Transaction({
   onCreateRule,
   onScheduleAction,
   onMakeAsNonSplitTransactions,
+  onSettleNetZero,
   onSplit,
   onManagePayees,
   onCreatePayee,
@@ -1542,6 +1600,7 @@ const Transaction = memo(function Transaction({
     onCreateRule: ids => onCreateRule?.(ids),
     onScheduleAction: (name, ids) => onScheduleAction?.(name, ids),
     onMakeAsNonSplitTransactions: ids => onMakeAsNonSplitTransactions?.(ids),
+    onSettleNetZero: ids => onSettleNetZero?.(ids),
   });
 
   // For child transactions the date/account cells render as blank
@@ -1609,14 +1668,18 @@ const Transaction = memo(function Transaction({
         return isChild ? (
           <Field
             key={columnId}
-            /* Date blank placeholder for Child transaction */
+            name="date"
+            /* Date placeholder for Child transaction - display historical date */
             width={110}
             style={{
               width: 110,
               backgroundColor: theme.tableRowBackgroundHover,
+              color: theme.tableTextSubdued,
               border: 0, // known z-order issue, bottom border for parent transaction hidden
             }}
-          />
+          >
+            {date ? formatDate(parseISO(date), dateFormat) : ''}
+          </Field>
         ) : (
           <CustomCell
             key={columnId}
@@ -1748,6 +1811,8 @@ const Transaction = memo(function Transaction({
             onManagePayees={onManagePayees}
             onNavigateToTransferAccount={onNavigateToTransferAccount}
             onNavigateToSchedule={onNavigateToSchedule}
+            expanded={expanded}
+            onToggleSplit={onToggleSplit}
           />
         );
       case 'notes':
@@ -2663,6 +2728,7 @@ type TransactionTableInnerProps = {
     ids: TransactionEntity['id'][],
   ) => void;
   onMakeAsNonSplitTransactions: (ids: TransactionEntity['id'][]) => void;
+  onSettleNetZero?: (ids: TransactionEntity['id'][]) => void;
   showSelection: boolean;
   allowSplitTransaction?: boolean;
 
@@ -2855,7 +2921,7 @@ function TransactionTableInner({
         selected={selected}
         highlighted={false}
         added={isNew?.(trans.id)}
-        expanded={isExpanded?.(trans.id)}
+        expanded={expanded}
         matched={isMatched?.(trans.id)}
         showZeroInDeposit={isChildDeposit}
         showGoldQuantity={props.goldQuantityByTransaction != null}
@@ -2878,6 +2944,7 @@ function TransactionTableInner({
         onCreateRule={props.onCreateRule}
         onScheduleAction={props.onScheduleAction}
         onMakeAsNonSplitTransactions={props.onMakeAsNonSplitTransactions}
+        onSettleNetZero={props.onSettleNetZero}
         onSplit={props.onSplit}
         onManagePayees={props.onManagePayees}
         onCreatePayee={props.onCreatePayee}
@@ -3086,6 +3153,7 @@ export type TransactionTableProps = {
     ids: TransactionEntity['id'][],
   ) => void;
   onMakeAsNonSplitTransactions: (ids: string[]) => void;
+  onSettleNetZero?: (ids: string[]) => void;
   showSelection: boolean;
   allowSplitTransaction?: boolean;
   onManagePayees: (id?: PayeeEntity['id']) => void;
@@ -3670,6 +3738,7 @@ export const TransactionTable = forwardRef(
       onCreateRule: onCreateRuleProp,
       onScheduleAction: onScheduleActionProp,
       onMakeAsNonSplitTransactions: onMakeAsNonSplitTransactionsProp,
+      onSettleNetZero: onSettleNetZeroProp,
       onSplit: onSplitProp,
     } = props;
 
@@ -3777,6 +3846,13 @@ export const TransactionTable = forwardRef(
         onMakeAsNonSplitTransactionsProp(ids);
       },
       [onMakeAsNonSplitTransactionsProp],
+    );
+
+    const onSettleNetZero = useCallback(
+      (ids: TransactionEntity['id'][]) => {
+        onSettleNetZeroProp?.(ids);
+      },
+      [onSettleNetZeroProp],
     );
 
     const onSplit = useMemo(() => {
@@ -4025,6 +4101,7 @@ export const TransactionTable = forwardRef(
             onCreateRule={onCreateRule}
             onScheduleAction={onScheduleAction}
             onMakeAsNonSplitTransactions={onMakeAsNonSplitTransactions}
+            onSettleNetZero={onSettleNetZero}
             onSplit={onSplit}
             onCheckNewEnter={onCheckNewEnter}
             onCheckEnter={onCheckEnter}

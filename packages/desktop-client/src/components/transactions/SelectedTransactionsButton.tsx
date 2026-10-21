@@ -48,6 +48,7 @@ type SelectedTransactionsButtonProps = {
   onMakeAsSplitTransaction: (selectedIds: string[]) => void;
   onMakeAsNonSplitTransactions: (selectedIds: string[]) => void;
   onMergeTransactions: (selectedIds: string[]) => void;
+  onSettleNetZero?: (selectedIds: string[]) => void;
 };
 
 export function SelectedTransactionsButton({
@@ -66,6 +67,7 @@ export function SelectedTransactionsButton({
   onMakeAsSplitTransaction,
   onMakeAsNonSplitTransactions,
   onMergeTransactions,
+  onSettleNetZero,
 }: SelectedTransactionsButtonProps) {
   const { t } = useTranslation();
   const dispatch = useDispatch();
@@ -158,6 +160,36 @@ export function SelectedTransactionsButton({
 
     return singleSchedules.length === selectedSchedules.length;
   }, [selectedSchedules]);
+
+  const canMakeAsNetZeroGroup = useMemo(() => {
+    if (selectedIds.length <= 1 || types.preview) {
+      return false;
+    }
+
+    const transactions = selectedIds.map(id => getTransaction(id));
+    const [firstTransaction] = transactions;
+
+    const areAllSameAccount = transactions.every(
+      tx => tx && tx.account === firstTransaction?.account,
+    );
+    const areNoSplitTransactions = transactions.every(
+      tx => tx && !tx.is_parent && !tx.is_child,
+    );
+    const areNoReconciledTransactions = transactions.every(
+      tx => tx && !tx.reconciled,
+    );
+    const sum = transactions.reduce(
+      (total, tx) => total + (tx ? tx.amount : 0),
+      0,
+    );
+
+    return (
+      areAllSameAccount &&
+      areNoSplitTransactions &&
+      areNoReconciledTransactions &&
+      sum === 0
+    );
+  }, [selectedIds, types, getTransaction]);
 
   const canMakeAsSplitTransaction = useMemo(() => {
     if (selectedIds.length <= 1 || types.preview) {
@@ -279,12 +311,24 @@ export function SelectedTransactionsButton({
     hotKeyOptions,
     [onEdit, selectedIds],
   );
-  // merge
+  // merge or settle net-zero
   useHotkeys(
     'g',
-    () => canMerge && onMergeTransactions(selectedIds),
+    () => {
+      if (canMerge) {
+        onMergeTransactions(selectedIds);
+      } else if (canMakeAsNetZeroGroup && onSettleNetZero) {
+        onSettleNetZero(selectedIds);
+      }
+    },
     hotKeyOptions,
-    [onMergeTransactions, selectedIds],
+    [
+      canMerge,
+      canMakeAsNetZeroGroup,
+      onMergeTransactions,
+      onSettleNetZero,
+      selectedIds,
+    ],
   );
   // make transfer
   useHotkeys(
@@ -371,6 +415,15 @@ export function SelectedTransactionsButton({
                     } as const,
                   ]
                 : []),
+              ...(canMakeAsNetZeroGroup && onSettleNetZero
+                ? [
+                    {
+                      name: 'settle-net-zero',
+                      text: t('Settle net-zero bundle'),
+                      key: 'G',
+                    } as const,
+                  ]
+                : []),
               ...(canMakeAsSplitTransaction
                 ? [
                     {
@@ -419,6 +472,9 @@ export function SelectedTransactionsButton({
             break;
           case 'delete':
             onDelete(selectedIds);
+            break;
+          case 'settle-net-zero':
+            onSettleNetZero?.(selectedIds);
             break;
           case 'make-as-split-transaction':
             onMakeAsSplitTransaction(selectedIds);

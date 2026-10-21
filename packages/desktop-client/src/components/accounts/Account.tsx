@@ -540,7 +540,7 @@ class AccountInternal extends PureComponent<
           } else {
             this.props.splitsExpandedDispatch({
               type: 'set-mode',
-              mode: this.props.expandSplits ? 'expand' : 'collapse',
+              mode: this.props.expandSplits ? 'collapse' : 'expand',
             });
           }
         }
@@ -1180,6 +1180,64 @@ class AccountInternal extends PureComponent<
 
   onBatchDelete = (ids: string[]) => {
     void this.props.onBatchDelete({ ids, onSuccess: this.refetchTransactions });
+  };
+
+  onSettleNetZero = async (ids: string[]) => {
+    this.setState({ workingHard: true });
+
+    const { data } = await aqlQuery(
+      q('transactions')
+        .filter({ id: { $oneof: ids } })
+        .select('*')
+        .options({ splits: 'none' }),
+    );
+
+    const transactions: TransactionEntity[] = data;
+
+    if (!transactions || transactions.length === 0) {
+      this.setState({ workingHard: false });
+      return;
+    }
+
+    const sorted = [...transactions].sort((a, b) =>
+      (a.date || '').localeCompare(b.date || ''),
+    );
+    const latestTransaction = sorted[sorted.length - 1];
+
+    const parentId = uuidv4();
+    const parentTransaction = {
+      id: parentId,
+      is_parent: true,
+      cleared: transactions.every(t => !!t.cleared),
+      date: latestTransaction.date,
+      account: latestTransaction.account,
+      amount: 0,
+      notes: t('Tất toán (Net 0)'),
+    };
+
+    const childTransactions = transactions.map((t, index) => ({
+      ...makeChild(parentTransaction, t),
+      date: t.date,
+      sort_order: index,
+      cleared: t.cleared != null ? t.cleared : parentTransaction.cleared,
+    }));
+
+    await send('transactions-batch-update', {
+      added: [parentTransaction],
+      updated: childTransactions,
+    });
+
+    this.props.splitsExpandedDispatch({
+      type: 'close-splits',
+      ids: [parentId],
+    });
+
+    void this.refetchTransactions();
+
+    this.dispatchSelected?.({
+      type: 'select-all',
+      ids: [parentId],
+    });
   };
 
   onMakeAsSplitTransaction = async (ids: string[]) => {
@@ -1925,6 +1983,7 @@ class AccountInternal extends PureComponent<
                 onMakeAsSplitTransaction={this.onMakeAsSplitTransaction}
                 onMakeAsNonSplitTransactions={this.onMakeAsNonSplitTransactions}
                 onMergeTransactions={this.onMergeTransactions}
+                onSettleNetZero={this.onSettleNetZero}
               />
 
               {account?.account_subtype === 'gold' && (
@@ -2001,6 +2060,7 @@ class AccountInternal extends PureComponent<
                   onMakeAsNonSplitTransactions={
                     this.onMakeAsNonSplitTransactions
                   }
+                  onSettleNetZero={this.onSettleNetZero}
                   onRefetch={this.refetchTransactions}
                   onCloseAddTransaction={() =>
                     this.setState({ isAdding: false })
