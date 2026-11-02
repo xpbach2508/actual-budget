@@ -4,6 +4,7 @@ import MockDate from 'mockdate';
 import { aqlQuery } from '#server/aql';
 import * as db from '#server/db';
 import { loadMappings } from '#server/db/mappings';
+import * as prefs from '#server/prefs';
 import { loadRules, updateRule } from '#server/transactions/transaction-rules';
 import { q } from '#shared/query';
 import { getNextDate } from '#shared/schedules';
@@ -351,6 +352,56 @@ describe('schedule app', () => {
       expect(row.next_date).toBe('2020-12-30');
     });
 
+    it('preserves skipped dates on rename but resets them when the account changes', async () => {
+      MockDate.set(new Date(2021, 4, 17));
+
+      const accountId = await db.insertAccount({ name: 'Checking' });
+      const otherAccountId = await db.insertAccount({ name: 'Savings' });
+      const id = await createSchedule({
+        conditions: [
+          { op: 'is', field: 'account', value: accountId },
+          {
+            op: 'is',
+            field: 'date',
+            value: {
+              start: '2021-05-17',
+              frequency: 'monthly',
+              patterns: [{ type: 'day', value: 17 }],
+            },
+          },
+        ],
+      });
+
+      await skipNextDate({ id });
+      const {
+        data: [schedule],
+      } = await aqlQuery(q('schedules').filter({ id }).select(['_conditions']));
+      // Advance the clock so a reset stamps a newer `base_next_date_ts` than the skip
+      MockDate.set(new Date(2021, 4, 17, 0, 1));
+
+      await updateSchedule({
+        schedule: { id, name: 'Broadband' },
+        conditions: schedule._conditions,
+      });
+      let result = await aqlQuery(
+        q('schedules').filter({ id }).calculate('next_date'),
+      );
+      expect(result.data).toBe('2021-06-17');
+
+      await updateSchedule({
+        schedule: { id },
+        conditions: schedule._conditions.map(condition =>
+          condition.value === accountId
+            ? { ...condition, value: otherAccountId }
+            : condition,
+        ),
+      });
+      result = await aqlQuery(
+        q('schedules').filter({ id }).calculate('next_date'),
+      );
+      expect(result.data).toBe('2021-05-17');
+    });
+
     it('updateSchedule ignores the condition `type` field when date value is unchanged', async () => {
       const id = await createSchedule({
         conditions: [
@@ -635,6 +686,127 @@ describe('schedule app', () => {
       row = res.data[0];
 
       expect(row.next_date).toBe('2020-12-07');
+    });
+
+    it('createSchedule keeps an occurrence moved `after` the weekend onto a later day', async () => {
+      // Tests run on Sunday 1 January 2017. Saturday 31 December moves to
+      // Monday 2 January, which is still ahead, so it is the next date.
+      for (const frequency of ['weekly', 'monthly'] as const) {
+        const id = await createSchedule({
+          schedule: { name: frequency },
+          conditions: [
+            {
+              op: 'is',
+              field: 'date',
+              value: {
+                start: '2016-12-31',
+                frequency,
+                patterns: [],
+                skipWeekend: true,
+                weekendSolveMode: 'after',
+              },
+            },
+          ],
+        });
+
+        const {
+          data: [row],
+        } = await aqlQuery(q('schedules').filter({ id }).select(['next_date']));
+
+        expect(row.next_date).toBe('2017-01-02');
+      }
+    });
+
+    it('updateSchedule keeps an occurrence moved `after` the weekend onto a later day', async () => {
+      const id = await createSchedule({
+        conditions: [{ op: 'is', field: 'date', value: '2020-12-20' }],
+      });
+
+      // Edited on Sunday 23 May: Saturday 22 May moves to Monday 24 May,
+      // which is still ahead, so it is the next date.
+      MockDate.set(new Date(2021, 4, 23, 12));
+
+      try {
+        await updateSchedule({
+          schedule: { id },
+          conditions: [
+            {
+              op: 'is',
+              field: 'date',
+              value: {
+                start: '2021-05-22',
+                frequency: 'weekly',
+                patterns: [],
+                skipWeekend: true,
+                weekendSolveMode: 'after',
+              },
+            },
+          ],
+        });
+
+        const {
+          data: [row],
+        } = await aqlQuery(q('schedules').filter({ id }).select(['next_date']));
+
+        expect(row.next_date).toBe('2021-05-24');
+      } finally {
+        MockDate.reset();
+      }
+    });
+
+    it('createSchedule uses the local day west of UTC', async () => {
+      // `new Date('2017-01-01')` is UTC midnight, which is still Saturday
+      // 31 December in New York, so that past Saturday became the next date.
+      const tz = process.env.TZ;
+      process.env.TZ = 'America/New_York';
+
+      try {
+        const id = await createSchedule({
+          conditions: [
+            {
+              op: 'is',
+              field: 'date',
+              value: {
+                start: '2016-12-24',
+                frequency: 'weekly',
+                patterns: [],
+              },
+            },
+          ],
+        });
+
+        const {
+          data: [row],
+        } = await aqlQuery(q('schedules').filter({ id }).select(['next_date']));
+
+        expect(row.next_date).toBe('2017-01-07');
+      } finally {
+        process.env.TZ = tz;
+      }
+    });
+
+    it('createSchedule keeps the last date of a schedule that has ended', async () => {
+      const id = await createSchedule({
+        conditions: [
+          {
+            op: 'is',
+            field: 'date',
+            value: {
+              start: '2016-11-07',
+              frequency: 'weekly',
+              patterns: [],
+              endMode: 'after_n_occurrences',
+              endOccurrences: 2,
+            },
+          },
+        ],
+      });
+
+      const {
+        data: [row],
+      } = await aqlQuery(q('schedules').filter({ id }).select(['next_date']));
+
+      expect(row.next_date).toBe('2016-11-14');
     });
 
     it('auto-posts every missed recurring occurrence while catching up', async () => {
@@ -1138,6 +1310,70 @@ describe('schedule app', () => {
         MockDate.reset();
         await schedulesApp.stopServices();
       }
+    });
+  });
+
+  describe('auto-post service throttling', () => {
+    const dateCondition = {
+      op: 'is',
+      field: 'date',
+      value: '2020-12-01',
+    } as const;
+
+    beforeEach(async () => {
+      await prefs.loadPrefs();
+      await prefs.savePrefs({ lastScheduleRun: '2020-12-01' });
+    });
+
+    afterEach(() => {
+      prefs.unloadPrefs();
+    });
+
+    it('clears the marker when a schedule that posts transactions is created', async () => {
+      await createSchedule({
+        schedule: { posts_transaction: true },
+        conditions: [dateCondition],
+      });
+
+      expect(prefs.getPrefs().lastScheduleRun).toBeUndefined();
+    });
+
+    it('keeps the marker when the created schedule does not post transactions', async () => {
+      await createSchedule({
+        schedule: { posts_transaction: false },
+        conditions: [dateCondition],
+      });
+
+      expect(prefs.getPrefs().lastScheduleRun).toBe('2020-12-01');
+    });
+
+    it('clears the marker when a schedule starts posting transactions', async () => {
+      const id = await createSchedule({ conditions: [dateCondition] });
+
+      await updateSchedule({ schedule: { id, posts_transaction: true } });
+
+      expect(prefs.getPrefs().lastScheduleRun).toBeUndefined();
+    });
+
+    it('clears the marker when updating a schedule that already posts transactions', async () => {
+      const id = await createSchedule({
+        schedule: { posts_transaction: true },
+        conditions: [dateCondition],
+      });
+
+      await prefs.savePrefs({ lastScheduleRun: '2020-12-01' });
+
+      await updateSchedule({ schedule: { id, name: 'Renamed schedule' } });
+
+      expect(prefs.getPrefs().lastScheduleRun).toBeUndefined();
+    });
+
+    it('keeps the marker when updating a schedule that does not post transactions', async () => {
+      const id = await createSchedule({ conditions: [dateCondition] });
+
+      await updateSchedule({ schedule: { id, name: 'Renamed schedule' } });
+
+      expect(prefs.getPrefs().lastScheduleRun).toBe('2020-12-01');
     });
   });
 });

@@ -63,8 +63,8 @@ export function ReviewQueue() {
     totalCount,
     fetchNext,
   } = usePagedQuery<TransactionEntity>(reviewQuery, reviewPageOptions);
-  const loadMoreRef = useRef<HTMLDivElement>(null);
-  const isLoadMoreVisible = useIsInViewport(loadMoreRef);
+  const [loadMoreElement, setLoadMoreElement] = useState<HTMLDivElement | null>(null);
+  const isLoadMoreVisible = useIsInViewport(loadMoreElement);
 
   useEffect(() => {
     if (hasNext && isLoadMoreVisible) {
@@ -487,7 +487,7 @@ export function ReviewQueue() {
               );
             })}
             {hasNext && (
-              <View ref={loadMoreRef} style={{ flexShrink: 0, height: 1 }} />
+              <View ref={setLoadMoreElement} style={{ flexShrink: 0, height: 1 }} />
             )}
           </View>
         ) : (

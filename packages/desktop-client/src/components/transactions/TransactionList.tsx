@@ -16,7 +16,7 @@ import {
   splitTransaction,
   updateTransaction,
 } from '@actual-app/core/shared/transactions';
-import { applyChanges, getChangedValues } from '@actual-app/core/shared/util';
+import { applyChanges } from '@actual-app/core/shared/util';
 import type {
   AccountEntity,
   CategoryEntity,
@@ -38,8 +38,9 @@ import { pushModal } from '#modals/modalsSlice';
 import { addNotification } from '#notifications/notificationsSlice';
 import { useDispatch } from '#redux';
 
+import { applyRulesToTransaction } from './applyRulesToTransaction';
 import { getGoldQuantityByTransaction } from './goldQuantity';
-import { shouldApplyRuleChange } from './table/utils';
+import type { ClearedFieldsByTransaction } from './table/utils';
 import { TransactionTable } from './TransactionsTable';
 import type { TransactionTableProps } from './TransactionsTable';
 // When data changes, there are two ways to update the UI:
@@ -93,6 +94,7 @@ type TransactionListProps = Pick<
   | 'balances'
   | 'categoryGroups'
   | 'dateFormat'
+  | 'focusedTransactionId'
   | 'hideFraction'
   | 'isAdding'
   | 'isMatched'
@@ -105,6 +107,7 @@ type TransactionListProps = Pick<
   | 'onCloseAddTransaction'
   | 'onCreatePayee'
   | 'onCreateRule'
+  | 'onFocusedTransactionShown'
   | 'onMakeAsNonSplitTransactions'
   | 'onSettleNetZero'
   | 'onSort'
@@ -162,6 +165,8 @@ export function TransactionList({
   dateFormat,
   hideFraction,
   renderEmpty,
+  focusedTransactionId,
+  onFocusedTransactionShown,
   onSort,
   sortField,
   ascDesc,
@@ -287,6 +292,7 @@ export function TransactionList({
     async (
       transaction: TransactionEntity,
       updatedFieldName: string | null = null,
+      clearedFields?: ClearedFieldsByTransaction,
     ) => {
       const afterRules = await send('rules-run', { transaction });
 
@@ -303,35 +309,12 @@ export function TransactionList({
         );
       }
 
-      const diff = getChangedValues(transaction, afterRules);
-
-      const newTransaction: TransactionEntity = { ...transaction };
-      if (diff) {
-        Object.keys(diff).forEach(field => {
-          if (
-            shouldApplyRuleChange(field, newTransaction[field], diff[field])
-          ) {
-            newTransaction[field] = diff[field];
-          }
-        });
-
-        // When a rule updates a parent transaction, overwrite all changes to the current field in subtransactions.
-        if (
-          transaction.is_parent &&
-          diff.subtransactions !== undefined &&
-          updatedFieldName !== null
-        ) {
-          newTransaction.subtransactions = diff.subtransactions.map(
-            (st, idx) => ({
-              ...(newTransaction.subtransactions?.[idx] || st),
-              ...(st[updatedFieldName] != null && {
-                [updatedFieldName]: st[updatedFieldName],
-              }),
-            }),
-          );
-        }
-      }
-      return newTransaction;
+      return applyRulesToTransaction(
+        transaction,
+        afterRules,
+        updatedFieldName,
+        clearedFields,
+      );
     },
     [dispatch],
   );
@@ -339,7 +322,7 @@ export function TransactionList({
   const onManagePayees = useCallback(
     (id: PayeeEntity['id']) => {
       void navigate(
-        '/payees',
+        '/settings/payees',
         id ? { state: { selectedPayee: id } } : undefined,
       );
     },
@@ -347,8 +330,16 @@ export function TransactionList({
   );
 
   const onNavigateToTransferAccount = useCallback(
-    (accountId: AccountEntity['id']) => {
-      void navigate(`/accounts/${accountId}`);
+    (
+      accountId: AccountEntity['id'],
+      transactionId?: TransactionEntity['id'],
+    ) => {
+      void navigate(
+        `/accounts/${accountId}`,
+        transactionId
+          ? { state: { focusTransactionId: transactionId } }
+          : undefined,
+      );
     },
     [navigate],
   );
@@ -538,6 +529,8 @@ export function TransactionList({
       <TransactionTable
         ref={tableRef}
         transactions={allTransactions}
+        focusedTransactionId={focusedTransactionId}
+        onFocusedTransactionShown={onFocusedTransactionShown}
         loadMoreTransactions={loadMoreTransactions}
         accounts={accounts}
         categoryGroups={categoryGroups}

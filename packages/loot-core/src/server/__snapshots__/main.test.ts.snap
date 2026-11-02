@@ -32,7 +32,7 @@ exports[`Accounts > Transfers are properly updated 1`] = `
     "acct": "two",
     "amount": -5000,
     "category": null,
-    "cleared": 0,
+    "cleared": 1,
     "date": 20170101,
     "description": "transfer-one",
     "error": null,
@@ -86,7 +86,7 @@ exports[`Accounts > Transfers are properly updated 2`] = `
 +     "acct": "three",
       "amount": -5000,
       "category": null,
-      "cleared": 0,
+      "cleared": 1,
       "date": 20170101,
       "description": "transfer-one","
 `;

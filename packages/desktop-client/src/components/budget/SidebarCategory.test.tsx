@@ -68,6 +68,7 @@ describe('SidebarCategory context menu', () => {
     expect(store.getState().contextMenu.isOpen).toBe(true);
     expect(contextMenuItemNames()).toEqual([
       'rename',
+      'icon',
       'toggle-visibility',
       'delete',
     ]);
@@ -116,6 +117,7 @@ describe('SidebarCategory context menu', () => {
     expect(store.getState().contextMenu.isOpen).toBe(true);
     expect(contextMenuItemNames()).toEqual([
       'rename',
+      'icon',
       'toggle-visibility',
       'delete',
     ]);

@@ -14,6 +14,7 @@ import { TransactionListWithBalances } from '#components/mobile/transactions/Tra
 import { useAccounts } from '#hooks/useAccounts';
 import { SchedulesProvider } from '#hooks/useCachedSchedules';
 import { useDateFormat } from '#hooks/useDateFormat';
+import { useFormat } from '#hooks/useFormat';
 import {
   shouldApplyGoldVirtualAdjustment,
   useGoldVirtualAdjustment,
@@ -21,6 +22,7 @@ import {
 import { useNavigate } from '#hooks/useNavigate';
 import { usePreviewTransactions } from '#hooks/usePreviewTransactions';
 import { getSchedulesQuery } from '#hooks/useSchedules';
+import { useSyncedPref } from '#hooks/useSyncedPref';
 import { useTransactions } from '#hooks/useTransactions';
 import { useTransactionsSearch } from '#hooks/useTransactionsSearch';
 import { collapseModals, pushModal } from '#modals/modalsSlice';
@@ -46,10 +48,18 @@ function TransactionListWithPreviews() {
   const isFiltered = filterConditions.length > 0;
   const { data: accounts = [] } = useAccounts();
   const goldVirtualAdjustment = useGoldVirtualAdjustment(accounts);
-  const makeRootTransactionsQuery = useCallback(
-    () => queries.transactions().options({ splits: 'all' }).select('*'),
-    [],
-  );
+
+  const [hideReconciled] = useSyncedPref('hide-reconciled-all');
+  const dateFormat = useDateFormat() || 'MM/dd/yyyy';
+  const currencySymbol = useFormat().currency.symbol;
+
+  const makeRootTransactionsQuery = useCallback(() => {
+    let query = queries.transactions().options({ splits: 'all' }).select('*');
+    if (hideReconciled === 'true') {
+      query = query.filter({ reconciled: { $eq: false } });
+    }
+    return query;
+  }, [hideReconciled]);
 
   const [currentQuery, setCurrentQuery] = useState<Query | undefined>(() =>
     isFiltered ? undefined : makeRootTransactionsQuery(),
@@ -57,6 +67,41 @@ function TransactionListWithPreviews() {
   const [transactionsQuery, setTransactionsQuery] = useState<Query | undefined>(
     currentQuery,
   );
+
+  const { isSearching, search } = useTransactionsSearch({
+    updateQuery: updateFn =>
+      setTransactionsQuery(query => (query ? updateFn(query) : query)),
+    resetQuery: () => setTransactionsQuery(currentQuery),
+    dateFormat,
+  });
+
+  const [searchText, setSearchText] = useState('');
+  const onSearch = useCallback(
+    (text: string) => {
+      setSearchText(text);
+      search(text);
+    },
+    [search],
+  );
+
+  const [prevHideReconciled, setPrevHideReconciled] = useState(hideReconciled);
+  if (hideReconciled !== prevHideReconciled) {
+    setPrevHideReconciled(hideReconciled);
+    if (!isFiltered) {
+      const query = makeRootTransactionsQuery();
+      setCurrentQuery(query);
+      setTransactionsQuery(
+        searchText !== ''
+          ? queries.transactionsSearch(
+              query,
+              searchText,
+              dateFormat,
+              currencySymbol,
+            )
+          : query,
+      );
+    }
+  }
 
   useEffect(() => {
     let isStale = false;
@@ -95,16 +140,8 @@ function TransactionListWithPreviews() {
   const { previewTransactions, isLoading: isPreviewTransactionsLoading } =
     usePreviewTransactions();
 
-  const dateFormat = useDateFormat() || 'MM/dd/yyyy';
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
-  const { isSearching, search: onSearch } = useTransactionsSearch({
-    updateQuery: updateFn =>
-      setTransactionsQuery(query => (query ? updateFn(query) : query)),
-    resetQuery: () => setTransactionsQuery(currentQuery),
-    dateFormat,
-  });
 
   const onOpenTransaction = useCallback(
     (transaction: TransactionEntity) => {
